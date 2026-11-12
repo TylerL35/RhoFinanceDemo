@@ -1,5 +1,8 @@
 import { loadFixture, loadLocal, saveLocal, clearLocal, clone, terms } from './scenario.js';
-import { parseIntent } from './intents.js';
+import {
+  applyKnobs, defaultKnobs, knobsActive, knobEcho, parseWhatIf, suggestionsFor, canCancel,
+  HIRES_MAX, CUSHION_MIN, CUSHION_MAX,
+} from './whatif-model.js';
 import { raiseBy } from './engine.js';
 import { diffDays, namedDate } from './calendar.js';
 import * as home from './screens/home.js';
@@ -51,6 +54,9 @@ function initialState(fixture) {
     lastEchoOk: null,
     whatifResult: null,
     focusWhatIf: false,
+    knobs: null,
+    suggestions: null,
+    focusId: null,
     payrollBackup: null,
     ask: 'when',
     trust: null,
@@ -175,13 +181,16 @@ export const app = {
   guess(value) { this.state.guesses = { made: true, value }; this.render(); },
   ask(kind) { this.state.ask = kind; this.render(); },
   trustAction(kind) { this.state.trust = kind; this.render(); },
-  // Real decisions (confirm, choose, draft, collect) must survive Undo of a
-  // what-if, so they are applied to the live scenario, the pre-what-if base,
-  // and every snapshot on the stack.
+  // Real decisions (confirm, choose, draft, collect) change the real company.
+  // While a what-if is on, the live scenario is rebuilt from it, so the
+  // decision shows through the what-if and survives Undo and Reset.
   mutateReal(fn) {
-    fn(this.state.scenario);
-    if (this.state.intentBase) fn(this.state.intentBase);
-    for (const it of this.state.appliedIntents ?? []) fn(it.before);
+    if (this.state.intentBase) {
+      fn(this.state.intentBase);
+      this.state.scenario = applyKnobs(this.state.intentBase, this.knobs());
+    } else {
+      fn(this.state.scenario);
+    }
     saveLocal(this.state.scenario);
   },
   // Onboarding builds the scenario from the form alone (no fixture history, no
@@ -293,8 +302,8 @@ export const app = {
   // The alert outcome is screen state only; it is never written to the scenario
   // and never reaches the engine.
   resolveAlert(kind) { this.state.alerts.duplicate = kind; this.render(); },
-  // The what-if sentence for the whole stack: from the real company's date to
-  // the date with every applied what-if.
+  // The what-if sentence: from the real company's date to the date with every
+  // knob applied.
   whatIfSummary() {
     const from = raiseBy(this.realScenario());
     const to = raiseBy(this.state.scenario);
@@ -303,58 +312,115 @@ export const app = {
     const moved = d === 0 ? 'no change' : `${Math.abs(d)} day${Math.abs(d) === 1 ? '' : 's'} ${d < 0 ? 'earlier' : 'later'}`;
     return `${capital(namedDate(from))} → ${namedDate(to)}, ${moved}.`;
   },
-  // What-if only accepts the ruled grammar. The echo is painted before the
-  // scenario changes, then the re-render carries it into the rebuilt box, so the
-  // acknowledgement is seen before the new date. A refusal mutates nothing.
-  applyWhatIf() {
+  knobs() {
+    return this.state.knobs ?? defaultKnobs(this.realScenario());
+  },
+  // Every what-if (a control or a typed sentence) is a knob change on top of
+  // the real company. The stack keeps the knobs from before each change, so
+  // Undo steps back one change at a time.
+  setKnobs(next, { text, echo }) {
+    const real = this.realScenario();
+    this.state.appliedIntents ??= [];
+    this.state.appliedIntents.push({ text, echo, before: { ...this.knobs() } });
+    this.state.knobs = next;
+    this.state.lastEcho = echo;
+    this.state.lastEchoOk = true;
+    this.state.suggestions = null;
+    this.state.whatifDraft = '';
+    this.rebuildWhatIf(real);
+  },
+  rebuildWhatIf(real = this.realScenario()) {
+    const k = this.knobs();
+    if (knobsActive(k)) {
+      this.state.intentBase = real;
+      this.state.scenario = applyKnobs(real, k);
+    } else {
+      this.state.scenario = real;
+      this.state.intentBase = null;
+    }
+    this.state.whatifResult = knobsActive(k) ? this.whatIfSummary() : null;
+    saveLocal(this.state.scenario);
+    this.render();
+  },
+  // The controls. Each tap is one knob change with its own echo.
+  knob(kind, value, el = null) {
+    const real = this.realScenario();
+    const k = { ...this.knobs() };
+    if (kind === 'hires') k.hires = Math.max(0, Math.min(HIRES_MAX, k.hires + Number(value)));
+    if (kind === 'month') k.hireMonth = value;
+    if (kind === 'cushion') {
+      const now = k.cushion ?? real.cushionMonths;
+      const next = Math.max(CUSHION_MIN, Math.min(CUSHION_MAX, now + Number(value)));
+      k.cushion = next === real.cushionMonths ? null : next;
+    }
+    if (kind === 'price') k.price = Number(value);
+    if (kind === 'contract') {
+      k.contract = value === 'asis' ? null : value;
+      if (k.contract === 'cancel' && !canCancel(real)) return;
+    }
+    const before = this.knobs();
+    if (JSON.stringify(before) === JSON.stringify(k)) return;
+    const echoKind = kind === 'month' ? 'hires' : kind;
+    const echo = knobEcho(k, real, echoKind);
+    // The tapped control: keyboard focus returns to it, and the page is
+    // scrolled so it stays under the finger (content above it can change height).
+    this.state.focusId = el?.id || globalThis.document?.activeElement?.id || null;
+    this.setKnobs(k, { text: echo, echo });
+  },
+  // Typing: forgiving parse into the same knob change. A refusal changes
+  // nothing and offers up to two sentences to tap instead.
+  applyWhatIf(override = null) {
     const input = document.getElementById('whatif');
-    const text = input?.value ?? '';
-    const parsed = parseIntent(text, this.state.scenario);
-    const paint = (message, ok) => {
-      this.state.lastEcho = message;
-      this.state.lastEchoOk = ok;
+    const text = override ?? input?.value ?? '';
+    const real = this.realScenario();
+    const parsed = parseWhatIf(text, real, this.knobs());
+    const paint = (message) => {
       const echo = document.getElementById('whatif-echo');
       if (echo) echo.textContent = message;
     };
     this.state.focusWhatIf = true;
 
     if (!parsed.ok) {
-      paint(parsed.reason, false);
+      this.state.lastEcho = parsed.reason;
+      this.state.lastEchoOk = false;
+      this.state.suggestions = text.trim() ? suggestionsFor(text, real) : null;
+      this.state.whatifDraft = text; // keep what they typed, so they can fix it
+      paint(parsed.reason);
       this.render();
       return;
     }
-
-    paint(parsed.echo, true);
-    this.state.appliedIntents ??= [];
-    if (!this.state.intentBase) this.state.intentBase = clone(this.state.scenario);
-    this.state.appliedIntents.push({
-      text,
-      echo: parsed.echo,
-      before: clone(this.state.scenario),
-    });
-    parsed.mutation(this.state.scenario);
-    this.state.whatifResult = this.whatIfSummary();
-    saveLocal(this.state.scenario);
-    this.render();
+    paint(parsed.echo);
+    this.setKnobs(parsed.knobs, { text: text.trim(), echo: parsed.echo });
   },
-  // Undo pops the last intent and restores the snapshot taken immediately before
-  // it. The first intent's snapshot is also kept as intentBase for the stack.
+  // Undo steps back one change; Reset clears every what-if at once.
   undoWhatIf() {
     const intents = this.state.appliedIntents ?? [];
     const last = intents.pop();
     if (!last) return;
-    this.state.scenario = clone(last.before);
-    if (intents.length === 0) this.state.intentBase = null;
+    this.state.knobs = last.before;
     this.state.lastEcho = intents.at(-1)?.echo ?? null;
     this.state.lastEchoOk = intents.length ? true : null;
-    this.state.whatifResult = intents.length ? this.whatIfSummary() : null;
+    this.state.suggestions = null;
     this.state.focusWhatIf = true;
-    saveLocal(this.state.scenario);
-    this.render();
+    this.rebuildWhatIf();
   },
-  // "Change cushion" fills the what-if box without applying it, so the
-  // presenter (or a judge) sees the sentence and presses Enter.
+  resetWhatIf() {
+    this.state.appliedIntents = [];
+    this.state.knobs = null;
+    this.state.whatifDraft = '';
+    this.state.lastEcho = null;
+    this.state.lastEchoOk = null;
+    this.state.suggestions = null;
+    this.rebuildWhatIf();
+  },
+  // "Change cushion" scrolls to the controls and focuses the cushion stepper.
   prefillWhatIf(text) {
+    const knob = document.getElementById('knob-cushion-up');
+    if (knob) {
+      knob.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+      knob.focus?.({ preventScroll: true });
+      return;
+    }
     const input = document.getElementById('whatif');
     if (!input) return;
     input.value = text;
@@ -391,6 +457,12 @@ export const app = {
     const route = this.screens[this.route] ? this.route : '/';
     const doc = globalThis.document;
     const activeId = doc?.activeElement?.id || null;
+    // Remember where the control being used sits on screen, so a re-render that
+    // grows content above it does not move it out from under the pointer.
+    const anchorId = this.state.focusWhatIf ? 'whatif' : (this.state.focusId ?? activeId);
+    const anchorEl = anchorId ? doc?.getElementById?.(anchorId) : null;
+    const anchorTop = anchorEl && anchorEl !== doc.getElementById('app') && typeof anchorEl.getBoundingClientRect === 'function'
+      ? anchorEl.getBoundingClientRect().top : null;
     const out = this.screens[route]({ state: this.state, route, snapshot: this.snapshot });
     const root = doc.getElementById('app');
     root.innerHTML = typeof out === 'string' ? out : out.html;
@@ -407,8 +479,16 @@ export const app = {
 
     // Keep the keyboard where it was: the what-if input after a what-if, or
     // whichever control had focus if it still exists.
-    const focusId = this.state.focusWhatIf ? 'whatif' : activeId;
+    const focusId = this.state.focusWhatIf ? 'whatif' : (this.state.focusId ?? activeId);
     this.state.focusWhatIf = false;
+    this.state.focusId = null;
+    if (anchorTop !== null && focusId) {
+      const now = doc.getElementById(focusId);
+      if (now && now !== root && typeof now.getBoundingClientRect === 'function') {
+        const delta = now.getBoundingClientRect().top - anchorTop;
+        if (Math.abs(delta) > 1) globalThis.scrollBy?.(0, delta);
+      }
+    }
     if (focusId && doc.getElementById) {
       const el = doc.getElementById(focusId);
       if (el && el !== root && typeof el.focus === 'function') el.focus({ preventScroll: focusId !== 'whatif' });

@@ -4,6 +4,7 @@ import { parseDate, fmtDay, fmtMonthDay } from '../calendar.js';
 import { displayTenths } from '../derived.js';
 import { shortUsd } from '../money.js';
 import { segmentWords } from './bar.js';
+import { knobSummary } from '../whatif-model.js';
 
 const tenthsText = (t) => `${Math.trunc(t / 10)}.${t % 10}`;
 
@@ -78,8 +79,10 @@ function answers(sc, state) {
 
   if (hasWhatIf(state)) {
     const wd = raiseBy(state.scenario);
-    const intents = state.appliedIntents.map((x) => x.text).join(', then ');
-    if (wd) out.whatif = `Your what-if (${intents}) would move it to ${fmtMonthDay(wd)}.`;
+    const what = state.knobs
+      ? knobSummary(state.knobs, sc)
+      : (state.appliedIntents ?? []).map((x) => x.text).join(', then ');
+    if (wd && what) out.whatif = `Your what-if (${what}) would move it to ${fmtMonthDay(wd)}.`;
   }
   return out;
 }

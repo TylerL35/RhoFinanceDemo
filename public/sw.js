@@ -7,7 +7,7 @@
 // Bump this on every deploy: raise-by-v1 -> raise-by-v2 -> raise-by-v3. The cache
 // name is the only thing that invalidates a browser's precache, so a deploy that
 // leaves it alone keeps serving the old index.html and JS.
-const CACHE = 'raise-by-v1';
+const CACHE = 'raise-by-v2';
 const PRECACHE = [
   './assets/fonts/DMMono-OFL.txt',
   './assets/fonts/DMMono-Regular.woff',
@@ -24,6 +24,7 @@ const PRECACHE = [
   './js/intents.js',
   './js/money.js',
   './js/scenario.js',
+  './js/whatif-model.js',
   './js/screens/alerts.js',
   './js/screens/bar.js',
   './js/screens/bill.js',

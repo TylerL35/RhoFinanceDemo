@@ -35,9 +35,12 @@ The renewal beat picks Cancel (`PRESENTER_CHOICE` in `public/js/app.js`); set it
 describe the company with the renewal cancelled (Apr 20, 2.7 months), because every
 screen re-derives from the same scenario.
 
-Live what-if: on Raise-by, click the "What if" box, type `hire 2 more in March`, press
-Enter. What-if hires are hypothetical: the bar, the confirm card and Ask Rho keep
-describing the real company, and the headline says the date without the what-if.
+Live what-if: on Raise-by, use the controls (Hires `+`, start month, Cushion, Prices,
+HubSpot). Every tap moves the date at once; Undo steps back, "Reset what-ifs" clears
+all. Typing works in plain words too ("what if we hire two engineers in april",
+"prices up 10%", "drop hubspot"); anything it cannot model offers two sentences to tap.
+What-ifs are hypothetical: the bar, the confirm card and Ask Rho keep describing the
+real company, and the headline says the date without the what-if.
 
 ## Test
 
@@ -47,18 +50,6 @@ describing the real company, and the headline says the date without the what-if.
 
 Inter (400, 500) and DM Mono (400), SIL OFL 1.1, subset to Latin and bundled in
 `public/assets/fonts` with their licences. No CDN.
-
-## Live demo
-
-    https://adonis-umber.vercel.app
-
-Judges open this URL (the QR is `assets/qr-demo.svg` / `assets/qr-demo.png`). Vercel
-Authentication is disabled for this project on purpose: the demo holds no user data and
-every screen is synthetic.
-
-Deploy with `npx vercel --prod`. Vercel serves `public/` as the output directory, and
-`vercel.json` pins `no-cache` on `sw.js` and `/data/*` so a redeploy cannot be masked by the
-service worker's cache. Bump `CACHE` in `public/sw.js` on every deploy anyway.
 
 ## Regenerate the sandbox snapshot
 
@@ -73,11 +64,11 @@ This rewrites `public/data/rho-sandbox.snapshot.json`; the token is never writte
 Set the output directory to `public`. Then make the QR from the final URL, following `assets/QR-INSTRUCTIONS.md`.
 
 **Bump the cache version on every deploy.** `public/sw.js` precaches the whole app under a
-versioned cache name (`CACHE = 'raise-by-v1'`). The fetch handler is cache-first, so a browser
+versioned cache name (`CACHE = 'raise-by-v2'`). The fetch handler is cache-first, so a browser
 that has already installed the worker answers navigations from its cached `index.html` and JS
 and never asks the network — the only thing that tells it to re-install is a byte change in
 `sw.js`, and the only thing that drops the old entries is the new cache name in `activate`.
-So on each deploy edit the constant to the next number (`raise-by-v1` -> `raise-by-v2` ->
-`raise-by-v3`, ...), commit it with the rest of the change, and deploy. Skipping the bump
+So on each deploy edit the constant to the next number (`raise-by-v2` -> `raise-by-v3` ->
+`raise-by-v4`, ...), commit it with the rest of the change, and deploy. Skipping the bump
 serves the previous build to anyone who has visited before, which is the whole reason a
 "fixed" screen can still look broken on the demo machine.

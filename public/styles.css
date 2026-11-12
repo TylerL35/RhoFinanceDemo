@@ -187,7 +187,28 @@ p { margin: 0 0 10px; }
 .whatif input:focus { outline: 2px solid var(--abyss); outline-offset: 1px; }
 .echo { margin-top: 10px; font-size: 14px; }
 .echo.refused { color: var(--text); border-left: 2px solid var(--abyss); padding-left: 10px; }
-.whatif-result { font-size: 18px; font-weight: 500; margin-top: 4px; }
+.whatif-result { font-size: 18px; font-weight: 500; margin: 0; }
+/* What-if controls: one row per lever, label left, control right. */
+.knobs { border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--moon); margin-bottom: 14px; }
+.knob { display: grid; grid-template-columns: 120px 1fr; align-items: center; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--border); }
+.knob:first-child { border-top: 0; }
+.knob-k { font-weight: 500; font-size: 15px; }
+.knob-c { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.stepper { display: inline-flex; align-items: center; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+.stepper .step { border: 0; border-radius: 0; width: 40px; height: 38px; padding: 0; font-size: 18px; line-height: 1; }
+.stepper .step:disabled { opacity: .35; }
+.knob-v { min-width: 56px; text-align: center; font-weight: 500; font-variant-numeric: tabular-nums; border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border); padding: 0 8px; line-height: 38px; border-radius: 0; }
+.knob-sub { font-size: 14px; color: var(--text-muted); display: inline-flex; align-items: center; gap: 8px; }
+.knob-sub select { font: inherit; font-size: 15px; color: var(--text); padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--r); background: var(--moon); }
+.knob-note { font-size: 13px; color: var(--text-muted); }
+.seg { gap: 6px; }
+.seg-btn { padding: 7px 12px; font-size: 14px; font-weight: 400; }
+.seg-btn[aria-pressed="true"] { border-color: var(--abyss); background: var(--accent-soft); font-weight: 500; }
+.seg-btn:disabled { opacity: .45; }
+.whatif-foot { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 0 0 16px; }
+.type-row { margin-top: 4px; }
+.suggest { gap: 8px; margin-top: 8px; }
 
 /* Sticky date pill */
 .pill-rail { position: sticky; top: 14px; height: 0; z-index: 20; display: flex; justify-content: flex-end; }
@@ -325,6 +346,7 @@ p { margin: 0 0 10px; }
   .invoices th:nth-child(3), .invoices td:nth-child(3), .invoices th:nth-child(4), .invoices td:nth-child(4) { display: none; }
   .table .num { padding-right: 8px; }
   .whatif form { flex-wrap: wrap; }
+  .knob { grid-template-columns: 1fr; gap: 8px; }
   .whatif input { flex-basis: 100%; }
   .footer { padding: 6px 12px; }
   .footer-centre { display: none; }

@@ -7,7 +7,8 @@ import { parseDate, fmtDay } from '../calendar.js';
 // scenario that carries the what-if.
 export const realScenario = (state) => state?.intentBase ?? state?.scenario;
 
-export const hasWhatIf = (state) => (state?.appliedIntents?.length ?? 0) > 0;
+// A what-if is on when the live scenario is built on top of a real base.
+export const hasWhatIf = (state) => !!state?.intentBase;
 
 export const esc = (s) => String(s).replace(/[&<>"]/g, (c) => (
   { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]

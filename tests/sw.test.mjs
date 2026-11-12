@@ -5,6 +5,10 @@ import vm from 'node:vm';
 
 const PUBLIC = new URL('../public/', import.meta.url);
 
+// The versioned cache name comes from the worker itself, so bumping `CACHE`
+// for a deploy never breaks these tests.
+const CACHE = /const CACHE = '([^']+)'/.exec(readFileSync(new URL('sw.js', PUBLIC), 'utf8'))[1];
+
 // Dotfiles (Finder's .DS_Store) are not shipped files and are never precached.
 function walk(dir, base = '') {
   return readdirSync(dir, { withFileTypes: true })
@@ -75,13 +79,13 @@ test('install precaches every shipped file into the versioned cache', async () =
   const { api, stores } = makeCaches();
   const worker = loadWorker({ caches: api, fetchImpl: async () => { throw new Error('no network'); } });
   await worker.run('install', {});
-  const cached = [...stores.get('raise-by-v1').keys()].sort();
+  const cached = [...stores.get(CACHE).keys()].sort();
   const files = walk(PUBLIC).filter((f) => f !== 'sw.js').map((f) => `./${f}`).sort();
   assert.deepEqual(cached, files);
 });
 
 test('activate deletes caches from older versions', async () => {
-  const { api, deleted } = makeCaches({ caches: { 'raise-by-v0': {}, 'raise-by-v1': {} } });
+  const { api, deleted } = makeCaches({ caches: { 'raise-by-v0': {}, [CACHE]: {} } });
   const worker = loadWorker({ caches: api, fetchImpl: async () => ({}) });
   await worker.run('activate', {});
   assert.deepEqual(deleted, ['raise-by-v0']);
@@ -90,7 +94,7 @@ test('activate deletes caches from older versions', async () => {
 test('a cached GET is served without touching the network', async () => {
   let calls = 0;
   const request = { url: './styles.css', method: 'GET' };
-  const { api } = makeCaches({ caches: { 'raise-by-v1': { './styles.css': { body: 'cached' } } } });
+  const { api } = makeCaches({ caches: { [CACHE]: { './styles.css': { body: 'cached' } } } });
   const worker = loadWorker({ caches: api, fetchImpl: async () => { calls += 1; } });
   const res = await worker.request(request);
   assert.equal((await res).body, 'cached');
@@ -107,7 +111,7 @@ test('a GET miss goes to the network and writes the response back', async () => 
   const res = await worker.request(request);
   assert.equal((await res).body, 'from network');
   await new Promise((r) => setTimeout(r, 0));
-  assert.equal(stores.get('raise-by-v1').get('./late.json').body, 'from network');
+  assert.equal(stores.get(CACHE).get('./late.json').body, 'from network');
 });
 
 test('a non-GET request is left alone', async () => {
@@ -119,7 +123,7 @@ test('a non-GET request is left alone', async () => {
 });
 
 test('an offline navigation falls back to the precached index.html', async () => {
-  const { api } = makeCaches({ caches: { 'raise-by-v1': { './index.html': { body: 'shell' } } } });
+  const { api } = makeCaches({ caches: { [CACHE]: { './index.html': { body: 'shell' } } } });
   const worker = loadWorker({ caches: api, fetchImpl: async () => { throw new Error('offline'); } });
   const res = await worker.request({ url: '/?present', method: 'GET', mode: 'navigate' });
   assert.equal((await res).body, 'shell');
