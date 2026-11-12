@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { netBurn, raiseBy, range, bufferAt, grossSpend } from '../public/js/engine.js';
+import { netBurn, raiseBy, range, bufferAt, grossSpend, projectDate, revenueBand } from '../public/js/engine.js';
 import { clone } from '../public/js/scenario.js';
 
 const fx = JSON.parse(readFileSync(new URL('../public/data/fixture-seed.json', import.meta.url)));
@@ -50,4 +50,52 @@ test('the range runs Mar 1 to Apr 28 with a sample deviation', () => {
   assert.equal(iso(r.low), '2027-03-01');
   assert.equal(iso(r.base), '2027-04-11');
   assert.equal(iso(r.high), '2027-04-28');
+});
+
+test('provenance uses the as-of month burn and the buffer at the returned date', () => {
+  const c = clone(fx);
+  c.asOf = '2027-02-15';
+  c.payroll.push({ id: 'big', label: 'big', monthlyCost: 5000000, startsOn: '2027-03-01', confirmed: true });
+  const d = raiseBy(c);
+  const pd = projectDate(c);
+  const burn = pd.inputs.find((i) => i.label.startsWith('net burn'));
+  const buffer = pd.inputs.find((i) => i.label === 'buffer');
+  assert.equal(burn.label, 'net burn (Feb)');
+  assert.equal(burn.value, netBurn(c, 2027, 2));
+  assert.equal(buffer.value, bufferAt(c, d));
+});
+
+test('raise-by is null when cash never crosses the buffer', () => {
+  const rich = clone(fx);
+  rich.cash = 1e15;
+  assert.equal(raiseBy(rich), null);
+  const growing = clone(fx);
+  growing.revenue.current = 100000000;
+  assert.equal(raiseBy(growing), null);
+});
+
+test('project date keeps provenance when there is no crossing', () => {
+  const rich = clone(fx);
+  rich.cash = 1e15;
+  const pd = projectDate(rich);
+  assert.equal(pd.value, null);
+  assert.ok(pd.inputs.length > 0);
+  assert.equal(pd.inputs.find((i) => i.label === 'buffer').value, bufferAt(rich, new Date('2026-11-11T00:00:00Z')));
+});
+
+test('a trailing window shorter than two months collapses the range to the base date', () => {
+  for (const trailing of [[], [fx.revenue.trailing[0]]]) {
+    const c = clone(fx);
+    c.revenue.trailing = trailing;
+    c.revenue.current = c.plan.plannedRevenue;
+    assert.deepEqual(revenueBand(c), {
+      mean: 1, s: 0, low: c.plan.plannedRevenue, high: c.plan.plannedRevenue,
+    });
+    const r = range(c);
+    const base = iso(r.base);
+    for (const d of [r.low, r.base, r.high]) {
+      assert.ok(d instanceof Date && !Number.isNaN(d.getTime()));
+      assert.equal(iso(d), base);
+    }
+  }
 });

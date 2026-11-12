@@ -2,6 +2,7 @@ import { parseDate, addDays, diffDays, daysInMonth, monthStart, MONTH_DAYS } fro
 import { derived } from './derived.js';
 
 const HORIZON_MONTHS = 36;
+const MONTH_ABBR = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 export function payrollFor(sc, y, m) {
   let total = 0;
@@ -80,25 +81,29 @@ export function raiseBy(sc) {
     const d = addDays(asOf, i);
     if (cashAt(sc, d) <= bufferAt(sc, d)) return d;
   }
-  return addDays(asOf, HORIZON_MONTHS * 31);
+  return null;
 }
 
 export function projectDate(sc) {
+  const asOf = parseDate(sc.asOf);
   const d = raiseBy(sc);
-  return derived(d.getTime(), 'date', [
+  return derived(d ? d.getTime() : null, 'date', [
     { label: 'cash', value: sc.cash, source: 'scenario' },
-    { label: 'net burn (Nov)', value: netBurn(sc, 2026, 11), source: 'engine' },
-    { label: 'buffer', value: bufferAt(sc, parseDate(sc.asOf)), source: 'engine' },
+    { label: `net burn (${MONTH_ABBR[asOf.getUTCMonth()]})`, value: netBurn(sc, asOf.getUTCFullYear(), asOf.getUTCMonth() + 1), source: 'engine' },
+    { label: 'buffer', value: bufferAt(sc, d ?? asOf), source: 'engine' },
     { label: 'cushion', value: sc.cushionMonths, source: 'scenario' },
   ], 'first day cash <= buffer; buffer = sum of next cushionMonths of netBurn');
 }
 
 export function revenueBand(sc) {
   const ratios = sc.revenue.trailing.map((t) => t.actual / t.expected);
+  const planned = sc.plan.plannedRevenue;
+  if (ratios.length < 2) {
+    return { mean: 1, s: 0, low: planned, high: planned };
+  }
   const mean = ratios.reduce((a, b) => a + b, 0) / ratios.length;
   const variance = ratios.reduce((a, r) => a + (r - mean) ** 2, 0) / (ratios.length - 1);
   const s = Math.sqrt(variance);
-  const planned = sc.plan.plannedRevenue;
   return {
     mean, s,
     low: planned * Math.max(0.85, mean - s),
