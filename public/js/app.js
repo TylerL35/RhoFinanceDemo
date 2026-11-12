@@ -33,6 +33,15 @@ export const app = {
     else location.hash = `#${route}`; // the hashchange listener performs the single render
   },
   guess(value) { this.state.guesses = { made: true, value }; this.render(); },
+  // The only writer of payroll[].confirmed. Confirming never moves the date; the
+  // bar re-derives, and only "one-time" (which drops the payroll rows) moves it.
+  confirmPayroll(kind) {
+    if (kind === 'yes') this.state.scenario.payroll.forEach((p) => (p.confirmed = true));
+    if (kind === 'one-time') this.state.scenario.payroll = [];
+    this.state.confirmations.payroll = kind;
+    saveLocal(this.state.scenario);
+    this.render();
+  },
   reset() {
     clearLocal();
     this.state = initialState(this.fixture);

@@ -1,4 +1,6 @@
 import { shell, eyebrow } from './common.js';
+import { mountConfirm } from './confirm.js';
+import { mountBar } from './bar.js';
 import { range, netBurn, grossSpend, bufferAt } from '../engine.js';
 import { parseDate, fmtMonthDay } from '../calendar.js';
 import { fmt, derived } from '../derived.js';
@@ -150,7 +152,15 @@ export function reveal({ state }) {
     <div id="confirm-slot"></div>
     <div id="bar-slot"></div>
     ${sources}`;
-  return shell({ route: '/reveal', body, footerRight: 'Reveal' });
+  const html = shell({ route: '/reveal', body, footerRight: 'Reveal' });
+  // The slots only exist once shell() is in the document, so the mount waits one
+  // microtask. Guarded for Node, where reveal() is rendered without a DOM.
+  queueMicrotask(() => {
+    if (typeof document === 'undefined') return;
+    mountConfirm(document.getElementById('confirm-slot'));
+    mountBar(document.getElementById('bar-slot'));
+  });
+  return html;
 }
 
-// Task 9 mounts the confirm card and the bar into their slots; task 12 adds the what-if box.
+// Task 12 adds the what-if box below the bar.
