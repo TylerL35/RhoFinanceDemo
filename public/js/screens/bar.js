@@ -7,25 +7,13 @@ const tenths = (t) => `${Math.trunc(t / 10)}.${t % 10}`;
 
 const appState = () => (globalThis.app ?? globalThis.window?.app)?.state;
 
-// The engine assumes a contract exists (contracts[0] in contractMonthly and
-// oneOffsBetween). Onboarding can produce a contract-less scenario, so the
-// attribution gets the same zero-value stand-in that reveal.js and trust.js use.
-function calculable(sc) {
-  if (sc.contracts?.length) return sc;
-  return {
-    ...sc,
-    contracts: [{
-      id: 'none', vendor: '', amount: 0, renewsOn: sc.asOf, noticeDays: 0,
-      term: 'none', monthlyEquivalent: 0, choice: 'cancel', source: '',
-    }],
-  };
-}
-
 export function mountBar(el) {
   if (!el) return;
 
+  // The engine reads a missing contract as zero, so the real scenario is what
+  // gets attributed. No screen-level stand-in contract.
   const sc = appState()?.scenario;
-  const a = sc ? attribute(calculable(sc)) : null;
+  const a = sc ? attribute(sc) : null;
   const parts = a ? a.segments.map((x) => x.months) : [];
 
   // No crossing means no attribution: say so, print no graphic, and never let a
@@ -40,8 +28,20 @@ export function mountBar(el) {
 
   const [s, u] = displayTenths(parts, a.totalMonths);
   const total = s + u;
-  const signPct = total === 0 ? 0 : Math.round((s / total) * 1000) / 10;
   const anchor = a.anchor.toISOString().slice(0, 10);
+
+  // A total of 0.0 is not a small move: it is no move. "Why it moved 0.0
+  // months" over an empty bar reads like a bug, so say what is true instead.
+  if (total === 0) {
+    el.innerHTML = `
+      <div class="card">
+        <h2>Nothing has moved your date yet.</h2>
+        <p class="muted" style="margin-top:10px">Anchored to ${anchor}. Forward-looking from today: payroll already paid is not undone.</p>
+      </div>`;
+    return;
+  }
+
+  const signPct = Math.round((s / total) * 1000) / 10;
 
   el.innerHTML = `
     <div class="card">

@@ -1,5 +1,5 @@
 import { shell, eyebrow } from './common.js';
-import { raiseBy, range, attribute } from '../engine.js';
+import { raiseBy, range, attribute, activeContract } from '../engine.js';
 import { fmtMonthDay } from '../calendar.js';
 import { displayTenths } from '../derived.js';
 
@@ -16,26 +16,13 @@ function periodOf(d) {
 
 const tenthsText = (t) => `${Math.trunc(t / 10)}.${t % 10}`;
 
-// The engine assumes a contract exists. Onboarding can produce a scenario with
-// none, so the projection gets a zero-value stand-in (as reveal.js and trust.js
-// do) and the answer simply has no renewal to name.
-function engineScenario(sc) {
-  if (sc.contracts?.length) return sc;
-  return {
-    ...sc,
-    contracts: [{
-      id: 'none', vendor: '', amount: 0, renewsOn: sc.asOf, noticeDays: 0,
-      term: 'none', monthlyEquivalent: 0, choice: 'cancel', source: '',
-    }],
-  };
-}
-
+// The engine reads a missing contract as zero, so the projection runs on the
+// real scenario and the answer simply has no renewal to name.
 export function claude({ state }) {
   const sc = state.scenario;
-  const calc = engineScenario(sc);
-  const d = raiseBy(calc);
-  const r = range(calc);
-  const a = attribute(calc);
+  const d = raiseBy(sc);
+  const r = range(sc);
+  const a = attribute(sc);
   const parts = a.segments.map((x) => x.months);
 
   // A company whose cash never crosses has no date, no band and no segments.
@@ -51,7 +38,7 @@ export function claude({ state }) {
   } else {
     const [, uncertain] = displayTenths(parts, a.totalMonths);
     const hires = sc.payroll.length;
-    const vendor = sc.contracts?.[0]?.vendor ?? null;
+    const vendor = activeContract(sc)?.vendor ?? null;
     const reasons = [];
     if (hires > 0) reasons.push(`${hires} new hire${hires === 1 ? '' : 's'}`);
     if (vendor) reasons.push(`the ${vendor} renewal`);

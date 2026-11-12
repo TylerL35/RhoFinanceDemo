@@ -3,21 +3,6 @@ import { validate } from '../scenario.js';
 import { raiseBy } from '../engine.js';
 import { parseDate } from '../calendar.js';
 
-// The engine assumes a contract exists (contracts[0] in contractMonthly and
-// oneOffsBetween), and onboarding may build a contract-less company. The same
-// zero-value stand-in that reveal.js, trust.js and claude.js use lets the date
-// be computed without inventing renewal terms.
-function calculable(sc) {
-  if (sc.contracts?.length) return sc;
-  return {
-    ...sc,
-    contracts: [{
-      id: 'none', vendor: '', amount: 0, renewsOn: sc.asOf, noticeDays: 0,
-      term: 'none', monthlyEquivalent: 0, choice: 'cancel', source: '',
-    }],
-  };
-}
-
 // Every figure is either a number or NaN; nothing is defaulted into a lie. The
 // as-of date travels with the form so the projection never reads the wall clock.
 export function buildScenario(f) {
@@ -95,7 +80,7 @@ export function setupOutcome(sc) {
   const errs = validate(sc);
   if (errs.includes('NO_BURN')) return { note: NO_BURN, ready: false };
   if (errs.length || incompleteContract(sc)) return { note: MISSING, ready: false };
-  const d = raiseBy(calculable(sc));
+  const d = raiseBy(sc);
   if (d === null) return { note: NO_DATE, ready: false };
   return { note: `Raise by ${d.toISOString().slice(0, 10)}.`, ready: true };
 }

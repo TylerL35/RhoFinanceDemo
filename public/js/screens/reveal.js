@@ -21,47 +21,34 @@ function periodOf(d) {
   return `${part} ${fullMonth(d)}`;
 }
 
-// The engine assumes a contract exists (contracts[0] in contractMonthly and
-// oneOffsBetween). Onboarding can produce a contract-less scenario, so the
-// calculation gets a zero-value stand-in: no renewal, no monthly charge, nothing
-// to cancel. The screen still reads the real scenario for the receipt row.
-function engineScenario(sc) {
-  if (sc.contracts?.length) return sc;
-  return {
-    ...sc,
-    contracts: [{
-      id: 'none', vendor: '', amount: 0, renewsOn: sc.asOf, noticeDays: 0,
-      term: 'none', monthlyEquivalent: 0, choice: 'cancel', source: '',
-    }],
-  };
-}
+// The engine reads a missing contract as zero (activeContract() in engine.js),
+// so this screen hands it the real scenario, contract-less or not.
 
 export function reveal({ state }) {
   const sc = state.scenario;
-  const calc = engineScenario(sc);
   const asOf = parseDate(sc.asOf);
   const y = asOf.getUTCFullYear();
   const m = asOf.getUTCMonth() + 1;
   const contract = sc.contracts?.[0] ?? null;
   const payrollTotal = sc.payroll.reduce((sum, p) => sum + p.monthlyCost, 0);
 
-  const r = range(calc);
+  const r = range(sc);
   const band = r.band;
   const projected = r.base;
 
   const cash = derived(sc.cash, 'cents',
     [at('cash', sc.cash, 'scenario')], 'scenario.cash');
-  const burn = derived(netBurn(calc, y, m), 'cents',
-    [at('gross spend', grossSpend(calc, y, m), 'engine'),
+  const burn = derived(netBurn(sc, y, m), 'cents',
+    [at('gross spend', grossSpend(sc, y, m), 'engine'),
      at('revenue', sc.revenue.current, 'scenario'),
      at('payroll inside gross', payrollTotal, 'payroll')], 'grossSpend - revenue');
-  const buffer = derived(bufferAt(calc, asOf), 'cents',
+  const buffer = derived(bufferAt(sc, asOf), 'cents',
     [at('cushion', sc.cushionMonths, 'scenario'),
-     at('net burn', netBurn(calc, y, m), 'engine')], 'sum of next cushionMonths of netBurn');
-  const runwayMonths = derived((sc.cash - bufferAt(calc, asOf)) / netBurn(calc, y, m), 'months',
+     at('net burn', netBurn(sc, y, m), 'engine')], 'sum of next cushionMonths of netBurn');
+  const runwayMonths = derived((sc.cash - bufferAt(sc, asOf)) / netBurn(sc, y, m), 'months',
     [at('cash', sc.cash, 'scenario'),
-     at('buffer', bufferAt(calc, asOf), 'engine'),
-     at('burn', netBurn(calc, y, m), 'engine')], '(cash - buffer) / netBurn');
+     at('buffer', bufferAt(sc, asOf), 'engine'),
+     at('burn', netBurn(sc, y, m), 'engine')], '(cash - buffer) / netBurn');
   const cushion = derived(sc.cushionMonths, 'count',
     [at('cushion months', sc.cushionMonths, 'scenario')], 'scenario.cushionMonths');
   const monthsSampled = derived(sc.revenue.trailing.length, 'count',
@@ -71,8 +58,8 @@ export function reveal({ state }) {
 
   const dateD = derived(projected ? projected.getTime() : null, 'date',
     [at('cash', sc.cash, 'scenario'),
-     at('net burn', netBurn(calc, y, m), 'engine'),
-     at('buffer', bufferAt(calc, projected ?? asOf), 'engine'),
+     at('net burn', netBurn(sc, y, m), 'engine'),
+     at('buffer', bufferAt(sc, projected ?? asOf), 'engine'),
      at('cushion', sc.cushionMonths, 'scenario')],
     'first day cash <= buffer; buffer = sum of next cushionMonths of netBurn');
   const lowWhen = derived(r.low ? periodOf(r.low) : null, 'text',

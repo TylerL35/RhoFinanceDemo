@@ -3,23 +3,10 @@ import { netBurn, grossSpend } from '../engine.js';
 import { parseDate } from '../calendar.js';
 import { derived, fmt } from '../derived.js';
 
-// The engine assumes a contract exists (contracts[0] in contractMonthly and
-// oneOffsBetween). Onboarding can produce a contract-less scenario, so the run
-// rate gets a zero-value stand-in, exactly as reveal.js does. The card below
-// still names the missing terms as something it cannot see.
-function engineScenario(sc) {
-  if (sc.contracts?.length) return sc;
-  return {
-    ...sc,
-    contracts: [{
-      id: 'none', vendor: '', amount: 0, renewsOn: sc.asOf, noticeDays: 0,
-      term: 'none', monthlyEquivalent: 0, choice: 'cancel', source: '',
-    }],
-  };
-}
-
+// The engine reads a missing contract as zero, so the run rate is computed
+// from the real scenario. The card below still names the missing terms as
+// something it cannot see.
 export function trust({ state }) {
-  const calc = engineScenario(state.scenario);
   const sc = state.scenario;
   const asOf = parseDate(sc.asOf);
   const y = asOf.getUTCFullYear();
@@ -33,8 +20,8 @@ export function trust({ state }) {
      { label: 'rule', value: sc.suppression?.rule ?? '', source: 'scenario' }],
     'scenario.suppression.count');
 
-  const burn = derived(netBurn(calc, y, m), 'cents',
-    [{ label: 'gross', value: grossSpend(calc, y, m), source: 'engine' },
+  const burn = derived(netBurn(sc, y, m), 'cents',
+    [{ label: 'gross', value: grossSpend(sc, y, m), source: 'engine' },
      { label: 'revenue', value: sc.revenue.current, source: 'scenario' }],
     'grossSpend - revenue');
 

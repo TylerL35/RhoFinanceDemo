@@ -5,6 +5,14 @@ import { terms } from './scenario.js';
 const HORIZON_MONTHS = 36;
 const MONTH_ABBR = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+// Onboarding can build a company with no contracts at all (`contracts: []`).
+// Every calculation below reads the contract through this one helper, so a
+// missing contract means zero: no renewal, no monthly charge, nothing to
+// cancel, nothing to notice. Screens must not invent a stand-in contract.
+export function activeContract(sc) {
+  return sc.contracts?.[0] ?? null;
+}
+
 export function payrollFor(sc, y, m) {
   let total = 0;
   for (const p of sc.payroll) {
@@ -21,8 +29,8 @@ export function payrollFor(sc, y, m) {
 }
 
 function contractMonthly(sc, y, m) {
-  const c = sc.contracts[0];
-  if (c.choice !== 'monthly') return 0;
+  const c = activeContract(sc);
+  if (c?.choice !== 'monthly') return 0;
   const start = parseDate(c.renewsOn);
   const monthIndex = y * 12 + (m - 1);
   const startIndex = start.getUTCFullYear() * 12 + start.getUTCMonth();
@@ -40,10 +48,12 @@ export function netBurn(sc, y, m) {
 
 function oneOffsBetween(sc, from, to) {
   let delta = 0;
-  const c = sc.contracts[0];
-  const renews = parseDate(c.renewsOn);
-  if (c.choice !== 'cancel' && c.choice !== 'monthly' && renews > from && renews <= to) {
-    delta -= c.amount;
+  const c = activeContract(sc);
+  if (c) {
+    const renews = parseDate(c.renewsOn);
+    if (c.choice !== 'cancel' && c.choice !== 'monthly' && renews > from && renews <= to) {
+      delta -= c.amount;
+    }
   }
   for (const inv of sc.invoices) {
     if (inv.collected) {
@@ -133,7 +143,8 @@ function variantRemoving(sc, { signed, notCertain }) {
   const v = structuredClone(sc);
   const hiresInSigned = allHiresConfirmed(v);
   if (signed) {
-    v.contracts[0].choice = 'cancel';
+    const c = activeContract(v);
+    if (c) c.choice = 'cancel';
     if (hiresInSigned) v.payroll = [];
   }
   if (notCertain) {
@@ -175,18 +186,23 @@ export function attribute(sc) {
 }
 
 export function noticeState(sc) {
+  if (!activeContract(sc)) return { deadline: null, daysLeft: null, canCancel: false };
   return terms(sc, 'hubspot', parseDate(sc.asOf));
 }
 
 export function priceOption(sc, kind) {
   const base = structuredClone(sc);
-  base.contracts[0].choice = null;
+  const baseContract = activeContract(base);
+  if (baseContract) baseContract.choice = null;
   for (const inv of base.invoices) { inv.drafted = false; inv.collected = false; }
   const baseline = raiseBy(base);
 
+  // With no contract there is nothing to ask monthly or cancel, so those two
+  // kinds price as the baseline itself (delta 0) rather than as an error.
   const v = structuredClone(base);
-  if (kind === 'monthly') v.contracts[0].choice = 'monthly';
-  if (kind === 'cancel') v.contracts[0].choice = 'cancel';
+  const variant = activeContract(v);
+  if (kind === 'monthly' && variant) variant.choice = 'monthly';
+  if (kind === 'cancel' && variant) variant.choice = 'cancel';
   if (kind === 'collect') v.invoices.forEach((inv) => (inv.collected = true));
 
   const date = kind === 'approve' ? baseline : raiseBy(v);
