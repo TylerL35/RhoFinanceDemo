@@ -4,16 +4,19 @@ import { fmtMonthYear } from '../calendar.js';
 
 export function home({ state }) {
   const d = raiseBy(state.scenario);
-  const r = range(state.scenario);
   const guess = state.guesses.value;
   const chips = ['May', 'Jun', 'Jul', 'Aug']
-    .map((m) => `<button class="btn ghost" ${guess === m ? 'aria-pressed="true" style="border-color:#08A68A"' : ''}
+    .map((m) => `<button class="btn ghost" ${guess === m ? 'aria-pressed="true" style="border-color:var(--mint-deep)"' : ''}
         onclick="app.guess('${m}')">${m} 2027</button>`).join('');
-  const ask = d === null
-    ? `<p class="lead">Raise-By can't see a date yet: at this rate cash never runs out.</p>`
-    : `<div class="row">${chips}</div>
+  let ask;
+  if (d === null) {
+    ask = `<p class="lead">Raise-by cannot see a date yet: cash does not run out within three years at this rate.</p>`;
+  } else {
+    const r = range(state.scenario);
+    ask = `<div class="row">${chips}</div>
       <p class="muted" style="margin-top:14px">On a normal week this card says
         "Raise-by holds at ${fmtMonthYear(r.base)}. Next check Monday."</p>`;
+  }
   const body = `
     ${eyebrow('NYU PMC × RHO · DEMO')}
     <h1>Your raise-by date moved this week.</h1>
