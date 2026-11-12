@@ -61,21 +61,32 @@ export function parseIntent(text, sc) {
     // Per-month cost comes from the last payroll row. With no payroll baseline
     // there is no honest number to repeat, so this intent is refused rather
     // than priced from a made-up figure.
-    const cost = sc.payroll?.at(-1)?.monthlyCost;
+    const real = (sc.payroll ?? []).filter((p) => !p.whatif);
+    const cost = (real.length ? real : sc.payroll ?? []).at(-1)?.monthlyCost;
     if (!Number.isFinite(cost)) return refuse(REFUSE);
 
     const noun = n === 1 ? 'hire' : 'hires';
     return {
       ok: true,
       echo: `I read that as: ${n} more ${noun} starting ${FULL[monthIndex]} ${year}, ${shortUsdSigned(n * cost)}/mo.`,
+      // What-if rows are hypothetical: never confirmed, and flagged so the
+      // screens that describe the real company (bar, confirm card, Ask Rho)
+      // leave them out. Ids come from the request, not the row count, so an
+      // undo and re-apply gives the same ids.
       mutation: (v) => {
+        const taken = new Set(v.payroll.map((p) => p.id));
         for (let i = 0; i < n; i += 1) {
+          let k = i + 1;
+          while (taken.has(`whatif-${startsOn}-${k}`)) k += 1;
+          const id = `whatif-${startsOn}-${k}`;
+          taken.add(id);
           v.payroll.push({
-            id: `whatif-${v.payroll.length + 1}`,
-            label: `Extra hire ${i + 1}`,
+            id,
+            label: `What-if hire ${i + 1}`,
             monthlyCost: cost,
             startsOn,
-            confirmed: true,
+            confirmed: false,
+            whatif: true,
           });
         }
       },

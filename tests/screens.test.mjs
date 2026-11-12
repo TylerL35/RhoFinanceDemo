@@ -36,9 +36,10 @@ test('invoices prints the spec rows, the derived shortfall, and one mint button'
   assert.ok(copy.includes('Draft 2 reminders'), 'mint button copy is wrong');
   assert.ok(copy.includes('If both pay, about 2 days.'), 'caption does not match the priced collect option');
   assert.ok(
-    copy.includes('Collecting moves timing. Closing $9K a month more by Feb holds the date.'),
-    'closing line is not verbatim'
+    copy.includes('2 invoices are overdue. Collecting moves timing. Closing the sales gap moves the date.'),
+    'lead line is not verbatim'
   );
+  assert.ok(!copy.includes('by Feb'), 'the unsourced "by Feb" claim is back');
   assert.equal(mintCount(html), 1, 'invoicing must have exactly one mint button');
   assert.equal((copy.match(/Mark collected/g) ?? []).length, 2, 'each open invoice needs a ghost action');
   assert.ok(!copy.includes('reminder drafted'), 'draft state leaked before drafting');
@@ -65,7 +66,6 @@ test('the overdue days and the shortfall headline are read from the scenario', (
 
   assert.ok(copy.includes('Brightline $6,000 7 days overdue'), 'overdue days are not derived from dueOn');
   assert.ok(copy.includes('Sales are $12K a month behind your plan.'), 'headline is not derived');
-  assert.ok(copy.includes('Closing $12K a month more by Feb holds the date.'), 'closing shortfall is not derived');
 });
 
 test('a drafted invoice list turns the draft action into a disabled, non-mint control', () => {
@@ -193,7 +193,7 @@ test('alerts follows the scenario when the vendor, amount, or dates change', () 
 
 test('a resolved alert replaces both buttons with the saved verdict', () => {
   const disputed = renderAlerts(clone(fixture), 'disputed');
-  const verdict = disputed.match(/<div class="card"><p class="mono"[^>]*>(.*?)<\/p><\/div>/)?.[1];
+  const verdict = disputed.match(/<div class="card"><p class="mono"[^>]*>(.*?)<\/p>/)?.[1];
   assert.equal(verdict, 'Disputed.', 'the dispute verdict must claim nothing beyond the ruling');
   assert.ok(text(disputed).includes('Disputed.'));
   assert.ok(!text(disputed).includes('trust panel'), 'the dispute claims a trust-panel record that is never written');
@@ -236,10 +236,10 @@ test('trust prints 41 from suppression.count and the ruled copy', () => {
     copy.includes('AI reads and explains. Math makes every number. You approve. Rho never moves money.'),
     'closing line is not verbatim'
   );
-  assert.ok(html.includes('<button class="btn ghost">This is wrong</button>'), 'wrong action is not ghost');
+  assert.ok(html.includes(`<button class="btn ghost" onclick="app.trustAction('wrong')">This is wrong</button>`), 'wrong action is not a live ghost button');
   assert.ok(
-    html.includes('<button class="btn ghost">Share read-only with accountant</button>'),
-    'share action is not ghost'
+    html.includes(`<button class="btn ghost" onclick="app.trustAction('share')">Share read-only with accountant</button>`),
+    'share action is not a live ghost button'
   );
   assert.equal(mintCount(html), 0, 'the trust panel must not have a mint button');
 });
@@ -262,7 +262,6 @@ test('a contract-less scenario lists the renewal terms as something it cannot se
   const html = renderTrust(noContract);
   const copy = text(html);
   assert.ok(copy.includes('the renewal terms'), 'missing the renewal-terms gap');
-  assert.ok(copy.includes('net burn'), 'run rate should still render');
   for (const bad of badTokens) assert.ok(!copy.includes(bad), `contract-less trust contains ${bad}`);
 });
 
@@ -277,18 +276,21 @@ test('claude answers with the raiseBy date, range words, and attribute months', 
 
   assert.ok(copy.includes('When should we start raising?'), 'question missing');
   assert.ok(copy.includes('Apr 11, 2027'), 'date is not the raiseBy date');
-  assert.ok(copy.includes('(early March to late April)'), 'range words do not match the Reveal band');
+  assert.ok(copy.includes('(range Mar 1 to Apr 28)'), 'range is not the deck range');
   assert.ok(copy.includes('when you would have 6 months of cash left'), 'cushion missing');
   assert.ok(
     copy.includes(`It moved ${a.totalMonths.toFixed(1)} months earlier mainly because of 3 new hires and the HubSpot renewal.`),
     'months or reasons are not derived'
   );
+  // Before the hires are confirmed, the uncertain segment is sales AND the
+  // unconfirmed hires; the answer must not call all of it sales.
   assert.ok(
     copy.includes(
-      `Sales is the uncertain part (${(uncertain / 10).toFixed(1)} of ${a.totalMonths.toFixed(1)} months).`
+      `The uncertain part is sales $9K a month behind plan and 3 hires you haven't confirmed (${(uncertain / 10).toFixed(1)} of ${a.totalMonths.toFixed(1)} months).`
     ),
-    'sales segment is not the displayTenths figure'
+    `uncertain segment is not named by what is in it: ${copy}`
   );
+  assert.ok(!copy.includes(`Sales is the uncertain part (${(uncertain / 10).toFixed(1)}`), 'unconfirmed hires were called sales');
   assert.equal(signed + uncertain, Math.round(a.totalMonths * 10), 'tenths must sum to the total');
   assert.equal(mintCount(renderClaude(clone(fixture))), 0, 'Ask-Rho must stay read-only (no mint button)');
   for (const chip of ['Rho raise-by', 'HubSpot order form p.2', 'Gusto debits']) {

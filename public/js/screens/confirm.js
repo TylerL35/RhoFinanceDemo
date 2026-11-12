@@ -1,8 +1,9 @@
 import { shortUsd } from '../money.js';
+import { realScenario } from './common.js';
 
 const appState = () => (globalThis.app ?? globalThis.window?.app)?.state;
 
-const card = (body) => `<div class="card white">${body}</div>`;
+const card = (body, extra = '') => `<div class="card white${extra}">${body}</div>`;
 
 // "in Oct" names the month the payroll change started, read from the rows. A
 // row without a readable date simply drops the month rather than printing
@@ -13,28 +14,26 @@ function startedMonth(payroll) {
   return d.toLocaleString('en-US', { month: 'short', timeZone: 'UTC' });
 }
 
-export function mountConfirm(el) {
-  if (!el) return;
+const undo = '<button class="link" onclick="app.unconfirmPayroll()">Undo</button>';
 
-  const state = appState();
-  const sc = state?.scenario;
+// The question is about the real company's payroll: what-if rows are a
+// hypothetical and are never offered for confirmation.
+export function confirmHtml(state) {
+  const sc = realScenario(state);
   const kind = state?.confirmations?.payroll ?? null;
-  const payroll = sc?.payroll ?? [];
+  const payroll = (sc?.payroll ?? []).filter((p) => !p.whatif);
+
+  // "One-time" drops the rows, so this answer is shown before the empty check.
+  if (kind === 'one-time') {
+    return card(`<p class="mono line">Payroll treated as one-time, so it is not counted as hires. ${undo}</p>`);
+  }
 
   // Onboarding builds a company with no payroll rows. There is nothing to
   // confirm, and the fixture's Gusto question would be invented data on the
   // judge's own numbers, so the slot stays empty.
-  if (payroll.length === 0) {
-    el.innerHTML = '';
-    return;
-  }
+  if (payroll.length === 0) return '';
 
-  const confirmed = kind === 'yes'
-    || payroll.every((p) => p.confirmed);
-
-  // The question is about this company's payroll: the sum of its rows and the
-  // number of rows. The fixture sums to $27K over 3 rows, so its copy is
-  // unchanged, but a different company reads its own figures.
+  const confirmed = kind === 'yes' || payroll.every((p) => p.confirmed);
   const monthly = payroll.reduce((sum, p) => sum + p.monthlyCost, 0);
   const hires = payroll.length;
   const amount = shortUsd(monthly);
@@ -43,25 +42,24 @@ export function mountConfirm(el) {
 
   if (confirmed) {
     // The scenario holds no debit records, so the count is never stated.
-    el.innerHTML = card(`<p class="mono" style="margin:0">Payroll confirmed by you: ${amount} a month, from Gusto debits.</p>`);
-    return;
+    return card(`<p class="mono line">Payroll confirmed by you: ${amount} a month, from Gusto debits. ${undo}</p>`);
   }
-
-  if (kind === 'one-time') {
-    el.innerHTML = card(`<p class="mono" style="margin:0">Payroll treated as one-time, so it is not counted as hires.</p>`);
-    return;
-  }
-
   if (kind === 'other') {
-    el.innerHTML = card(`<p class="mono" style="margin:0">Payroll left as other, so it is not counted as hires.</p>`);
-    return;
+    return card(`<p class="mono line">Payroll left as other, so it is not counted as hires. ${undo}</p>`);
   }
 
-  el.innerHTML = card(`
+  return card(`
+      <div class="card-kicker">Needs your yes</div>
       <h2>Payroll through Gusto ${rose}. Is that ${hires} new hire${hires === 1 ? '' : 's'}?</h2>
+      <p class="muted">Until you answer, these count as not certain yet. Your answer changes the explanation, not the date.</p>
       <div class="row">
-        <button class="btn" onclick="app.confirmPayroll('yes')">Yes, ${hires} hire${hires === 1 ? '' : 's'}</button>
+        <button class="btn" id="confirm-yes" onclick="app.confirmPayroll('yes')">Yes, ${hires} hire${hires === 1 ? '' : 's'}</button>
         <button class="btn ghost" onclick="app.confirmPayroll('one-time')">One-time</button>
         <button class="btn ghost" onclick="app.confirmPayroll('other')">Other</button>
-      </div>`);
+      </div>`, ' attention');
+}
+
+export function mountConfirm(el) {
+  if (!el) return;
+  el.innerHTML = confirmHtml(appState());
 }

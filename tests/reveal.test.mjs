@@ -36,12 +36,33 @@ test('reveal prints the spec headline and range sentence in full month names', a
   assertNoBrokenDates(html, 'fixture');
 });
 
-test('reveal prints the receipt line with the base case month and day', async () => {
+test('reveal prints the receipt line with the base case and the range as month-day', async () => {
   const html = await render(structuredClone(fixture));
   assert.ok(
-    text(html).includes('Start raising by mid-April 2027 (base case Apr 11)'),
+    text(html).includes('Base case Apr 11 · range Mar 1 to Apr 28 · from your last 4 months of sales'),
     'receipt line is missing or not formatted as month-day'
   );
+});
+
+test('the math line is the deck sentence and its arithmetic is true', async () => {
+  const copy = text(await render(structuredClone(fixture)));
+  assert.ok(
+    copy.includes('$2.04M cash after the renewal ÷ $186K a month = 11 months. Minus your 6-month cushion = start by Apr 11.'),
+    `math line mismatch: ${copy.slice(copy.indexOf('cash after'), copy.indexOf('cash after') + 160)}`
+  );
+  assert.ok(!copy.includes('5.3 mo'), 'the old (cash - buffer) / burn figure is back');
+  assert.ok(!/20\d\d-\d\d-\d\d/.test(copy), 'an ISO date leaked into the reveal copy');
+  assert.ok(copy.includes('Change cushion'), 'the deck asks for a Change cushion link');
+});
+
+test('when burn changes before the date, the math line says so instead of dividing', async () => {
+  const { parseIntent } = await import('../public/js/intents.js');
+  const sc = structuredClone(fixture);
+  parseIntent('hire 2 more in March', sc).mutation(sc);
+  const copy = text(await render(sc));
+  assert.ok(copy.includes('Burn is $186K a month now and $204K from Mar 2027.'), `math line: ${copy}`);
+  assert.ok(copy.includes('cash reaches that line on Mar 22.'));
+  assert.ok(!copy.includes('= 11 months'), 'a single division would not land on this date');
 });
 
 test('reveal source table names its sources without invented counts', async () => {
@@ -49,7 +70,8 @@ test('reveal source table names its sources without invented counts', async () =
   const copy = text(html);
 
   assert.ok(copy.includes('Gusto debits'), 'payroll source label missing');
-  assert.ok(copy.includes('revenue deposits'), 'sales source label missing');
+  assert.ok(copy.includes('not confirmed yet'), 'unconfirmed payroll must say so next to its source');
+  assert.ok(copy.includes('Revenue deposits'), 'sales source label missing');
   assert.ok(copy.includes('HubSpot renewal'), 'contract row missing the vendor name');
   assert.ok(copy.includes('$60K on Dec 20'), 'contract amount and renewal date missing');
   assert.ok(copy.includes('Order form p.2'), 'contract source label missing');
@@ -84,10 +106,7 @@ test('reveal names the projected month part from the projected day, not a litera
     const label = part === 'mid' ? `mid-${monthYear}` : `${part} ${monthYear}`;
     const wrong = part === 'mid' ? `mid ${monthYear}` : `${part}-${monthYear}`;
     assert.ok(copy.includes(`Start raising by ${label}.`), `headline is not ${label}: ${copy.slice(0, 200)}`);
-    assert.ok(
-      copy.includes(`Start raising by ${label} (base case ${fmtMonthDay(d)})`),
-      `receipt is not ${label}: ${copy.slice(0, 260)}`
-    );
+    assert.ok(copy.includes(`Base case ${fmtMonthDay(d)}`), `receipt does not name ${fmtMonthDay(d)}`);
     assert.ok(!copy.includes(wrong), `headline or receipt used ${wrong} instead of ${label}`);
   }
 });

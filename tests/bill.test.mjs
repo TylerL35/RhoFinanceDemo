@@ -39,9 +39,9 @@ test('bill prices all three options from priceOption, in order, with derived dat
   const html = await render(structuredClone(fixture));
   const copy = text(html);
 
-  const approve = copy.indexOf('Approve as is, Apr 11 (no change)');
-  const monthly = copy.indexOf('Ask for monthly, Apr 12 (about a day later)');
-  const cancel = copy.indexOf('Cancel, Apr 20 (about 9 days later)');
+  const approve = copy.indexOf('Approve as is Apr 11 no change');
+  const monthly = copy.indexOf('Ask for monthly Apr 12 about a day later');
+  const cancel = copy.indexOf('Cancel Apr 20 about 9 days later');
   assert.ok(approve >= 0, `approve label missing: ${copy.slice(0, 400)}`);
   assert.ok(monthly >= 0, 'monthly label missing');
   assert.ok(cancel >= 0, 'cancel label missing');
@@ -106,40 +106,29 @@ test('bill has no catch-all around noticeState, so engine errors surface', async
 
 test('the burn chip is the as-of month net burn per day, not a literal', async () => {
   const { netBurn, parseDate } = await import('../public/js/engine.js');
-  const { usd } = await import('../public/js/money.js');
+  const { MONTH_DAYS } = await import('../public/js/calendar.js');
+  const { shortUsd1 } = await import('../public/js/money.js');
 
+  // One month length everywhere: MONTH_DAYS (365.25 / 12), never a local 30.4.
   const asOf = parseDate(fixture.asOf);
-  const perDay = netBurn(fixture, asOf.getUTCFullYear(), asOf.getUTCMonth() + 1) / 30.4;
-  assert.ok(
-    perDay >= 610000 && perDay <= 630000,
-    `fixture day burn should be $6.1K-$6.3K, got ${perDay / 100}`
-  );
-  assert.equal(usd(perDay), '$6,118', 'fixture day burn should print dollars, not thousands');
+  const perDay = netBurn(fixture, asOf.getUTCFullYear(), asOf.getUTCMonth() + 1) / MONTH_DAYS;
+  assert.equal(shortUsd1(perDay), '$6.1K', 'fixture day burn should print as $6.1K');
 
   const copy = text(await render(structuredClone(fixture)));
-  // Whole dollars, not shortUsd's "$6K": the chip is finer than the literal it
-  // replaced, so it never rounds the day rate away.
-  assert.ok(
-    copy.includes('$6,118/day burn'),
-    `fixture chip must read exactly "$6,118/day burn": ${copy}`
-  );
-  assert.ok(!copy.includes('$6K/day burn'), 'chip fell back to the coarser shortUsd figure');
+  assert.ok(copy.includes('$6.1K a day burn'), `fixture chip must read "$6.1K a day burn": ${copy}`);
+  assert.ok(!copy.includes('$6K a day burn'), 'chip fell back to the coarser shortUsd figure');
 
-  // Double the burn (gross 763,000 − revenue 391,000 = 372,000/mo vs 186,000)
+  // Double the burn (gross 763,000 - revenue 391,000 = 372,000/mo vs 186,000)
   // and the chip must move.
   const hotter = structuredClone(fixture);
   hotter.plan.plannedGrossSpend = 73600000;
-  const hotterAsOf = parseDate(hotter.asOf);
-  const hotterPerDay = netBurn(
-    hotter, hotterAsOf.getUTCFullYear(), hotterAsOf.getUTCMonth() + 1
-  ) / 30.4;
+  const hotterPerDay = netBurn(hotter, asOf.getUTCFullYear(), asOf.getUTCMonth() + 1) / MONTH_DAYS;
   const hotterCopy = text(await render(hotter));
-  assert.ok(
-    hotterCopy.includes(`${usd(hotterPerDay)}/day burn`),
-    `double-burn chip missing: ${hotterCopy}`
-  );
-  assert.equal(usd(hotterPerDay), '$12,237', 'double burn should print $12,237');
-  assert.ok(hotterCopy.includes('$12,237/day burn'), 'double-burn chip must differ from the fixture');
+  assert.equal(shortUsd1(hotterPerDay), '$12K');
+  assert.ok(hotterCopy.includes('$12K a day burn'), `double-burn chip missing: ${hotterCopy}`);
+
+  const src = readFileSync(new URL('../public/js/screens/bill.js', import.meta.url), 'utf8');
+  assert.ok(!/30\.4\b/.test(src), 'bill.js uses a local month length instead of MONTH_DAYS');
 });
 
 test('unused chips are gone', async () => {
@@ -166,7 +155,7 @@ test('a null raiseBy drops the raise-by claim and says there is no date yet', as
   );
   assert.ok(html.includes('class="muted"'), 'the no-raise-by line is not muted');
   assert.ok(copy.includes('Auto-renews Dec 20.'), 'renewal date should still print');
-  assert.ok(copy.includes('/day burn'), 'burn chip should still print');
+  assert.ok(copy.includes('a day burn'), 'burn chip should still print');
   assert.ok(!copy.includes('Invalid Date'), 'options rendered an invalid date');
 });
 
@@ -185,35 +174,47 @@ test('bill hides Cancel and says so when the notice window is closed', async () 
   assert.ok(copy.includes('Ask for monthly'), 'monthly option still offered');
 });
 
-test('bill marks only the chosen option as mint', async () => {
+test('bill has no mint button; the chosen option card is the selection', async () => {
   const none = await render(structuredClone(fixture));
-  assert.equal(mintCount(none), 0, 'no choice means no mint button');
+  assert.equal(mintCount(none), 0, 'option cards are not mint buttons');
+  assert.equal((none.match(/aria-pressed="true"/g) ?? []).length, 0, 'nothing is selected before a choice');
+  assert.ok(text(none).includes('Draft opens in your email.'), 'the draft note shows before a choice');
 
   const chosen = await render(structuredClone(fixture), 'cancel');
-  assert.equal(mintCount(chosen), 1, 'exactly one mint button when a choice is set');
+  assert.equal(mintCount(chosen), 0);
+  assert.equal((chosen.match(/aria-pressed="true"/g) ?? []).length, 1, 'exactly one selected card');
   const copy = text(chosen);
-  assert.ok(copy.includes('Recorded: Cancel.'), 'recorded line missing');
-  assert.ok(copy.includes('Revert'), 'revert control missing');
-  assert.ok(chosen.includes("app.choose(null)"), 'revert must clear the choice');
+  assert.ok(copy.includes('Selected'), 'selected label missing');
+  assert.ok(copy.includes('Notice of non-renewal: HubSpot annual plan'), 'cancel draft subject missing');
+  assert.ok(copy.includes('Draft · you review and send'), 'the draft does not say the founder sends it');
+  assert.ok(chosen.includes('app.choose(null)'), 'clicking the selected card must clear the choice');
+
+  const monthly = text(await render(structuredClone(fixture), 'monthly'));
+  assert.ok(monthly.includes('Moving our HubSpot annual plan to monthly billing'), 'monthly draft subject missing');
+  assert.ok(monthly.includes('Monthly plans can cost more, so the net shows once they quote.'));
+
+  const approve = text(await render(structuredClone(fixture), 'approve'));
+  assert.ok(approve.includes('$60,000 to HubSpot on Dec 20. Already counted in your date.'));
 });
 
 test('reveal states the included choice under the receipt line', async () => {
   const { reveal } = await import('../public/js/screens/reveal.js');
   const cases = [
-    ['cancel', 'Includes: HubSpot — cancel requested.', 'Apr 20'],
-    ['monthly', 'Includes: HubSpot — monthly requested.', 'Apr 12'],
-    ['approve', 'Includes: HubSpot — renewal approved.', 'Apr 11'],
+    ['cancel', 'Includes your HubSpot choice: cancel requested.', 'Apr 20'],
+    ['monthly', 'Includes your HubSpot choice: monthly requested.', 'Apr 12'],
+    ['approve', 'Includes your HubSpot choice: renewal approved.', 'Apr 11'],
   ];
   for (const [choice, line, date] of cases) {
     const sc = structuredClone(fixture);
     sc.contracts[0].choice = choice;
     const copy = text(reveal({ state: { scenario: sc, choice: { hubspot: choice } } }));
     assert.ok(copy.includes(line), `${choice}: includes line missing`);
-    assert.ok(copy.includes(`(base case ${date})`), `${choice}: receipt date did not move`);
+    assert.ok(copy.includes(`Base case ${date}`), `${choice}: receipt date did not move`);
   }
 
   const plain = text(reveal({ state: { scenario: structuredClone(fixture) } }));
-  assert.ok(!plain.includes('Includes: HubSpot'), 'no choice should print no includes line');
+  assert.ok(!plain.includes('Includes your HubSpot choice'), 'no choice should print no includes line');
+  assert.ok(!plain.includes('—'), 'reveal copy carries no em dash');
 });
 
 // Boots app.js with the browser bits stubbed. No ?present, so saveLocal() persists.

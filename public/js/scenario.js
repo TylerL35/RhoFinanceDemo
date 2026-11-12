@@ -13,7 +13,8 @@ export function validate(sc) {
   const errs = [];
   if (!(sc.cash > 0)) errs.push('NO_CASH');
   if (!(sc.plan.plannedGrossSpend >= 0)) errs.push('NO_SPEND');
-  if (!(sc.revenue.current > 0)) errs.push('NO_REVENUE');
+  // Zero revenue is a real company (pre-revenue); a missing or negative number is not.
+  if (!(sc.revenue.current >= 0)) errs.push('NO_REVENUE');
   const payroll = (sc.payroll ?? []).reduce((sum, p) => sum + p.monthlyCost, 0);
   if (sc.plan.plannedGrossSpend + payroll - sc.revenue.current <= 0) errs.push('NO_BURN');
   if (!(sc.cushionMonths >= 1)) errs.push('NO_CUSHION');
@@ -29,13 +30,21 @@ export function terms(sc, contractId, asOf = parseDate(sc.asOf)) {
 
 export function saveLocal(sc) {
   if (globalThis.__RAISE_BY_PRESENT__) return;
-  localStorage.setItem(KEY, JSON.stringify(sc));
+  try { localStorage.setItem(KEY, JSON.stringify(sc)); } catch { /* storage full or blocked */ }
 }
 
+// Storage can be unavailable (private mode, a sandboxed frame) or hold a
+// half-written value; neither may stop the demo from rendering.
 export function loadLocal() {
   if (globalThis.__RAISE_BY_PRESENT__) return null;
-  const raw = localStorage.getItem(KEY);
-  return raw ? JSON.parse(raw) : null;
+  try {
+    const raw = localStorage.getItem(KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
 }
 
-export function clearLocal() { localStorage.removeItem(KEY); }
+export function clearLocal() {
+  try { localStorage.removeItem(KEY); } catch { /* nothing saved to clear */ }
+}

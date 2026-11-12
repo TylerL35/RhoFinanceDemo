@@ -1,37 +1,130 @@
 {
   "id": "seed-saas",
+  "company": "Demo Co.",
   "label": "Synthetic data",
   "asOf": "2026-11-11",
   "cash": 210000000,
-  "plan": { "raisedOn": "2026-07-01", "amount": 270000000, "plannedGrossSpend": 55000000, "plannedRevenue": 40000000 },
+  "plan": {
+    "raisedOn": "2026-07-01",
+    "amount": 270000000,
+    "plannedGrossSpend": 55000000,
+    "plannedRevenue": 40000000
+  },
   "cushionMonths": 6,
   "revenue": {
     "current": 39100000,
     "priceMultiplier": 1,
     "trailing": [
-      { "month": "2026-07", "expected": 40000000, "actual": 40000000 },
-      { "month": "2026-08", "expected": 40000000, "actual": 39200000 },
-      { "month": "2026-09", "expected": 40000000, "actual": 38000000 },
-      { "month": "2026-10", "expected": 40000000, "actual": 36000000 }
+      {
+        "month": "2026-07",
+        "expected": 40000000,
+        "actual": 40000000
+      },
+      {
+        "month": "2026-08",
+        "expected": 40000000,
+        "actual": 39200000
+      },
+      {
+        "month": "2026-09",
+        "expected": 40000000,
+        "actual": 38000000
+      },
+      {
+        "month": "2026-10",
+        "expected": 40000000,
+        "actual": 36000000
+      }
     ]
   },
   "payroll": [
-    { "id": "hire-1", "label": "Eng hire 1", "monthlyCost": 900000, "startsOn": "2026-10-01", "confirmed": false },
-    { "id": "hire-2", "label": "Eng hire 2", "monthlyCost": 900000, "startsOn": "2026-10-01", "confirmed": false },
-    { "id": "hire-3", "label": "Eng hire 3", "monthlyCost": 900000, "startsOn": "2026-10-01", "confirmed": false }
+    {
+      "id": "hire-1",
+      "label": "Eng hire 1",
+      "monthlyCost": 900000,
+      "startsOn": "2026-10-01",
+      "confirmed": false
+    },
+    {
+      "id": "hire-2",
+      "label": "Eng hire 2",
+      "monthlyCost": 900000,
+      "startsOn": "2026-10-01",
+      "confirmed": false
+    },
+    {
+      "id": "hire-3",
+      "label": "Eng hire 3",
+      "monthlyCost": 900000,
+      "startsOn": "2026-10-01",
+      "confirmed": false
+    }
   ],
   "contracts": [
-    { "id": "hubspot", "vendor": "HubSpot", "amount": 6000000, "renewsOn": "2026-12-20",
-      "noticeDays": 30, "term": "annual", "monthlyEquivalent": 500000, "choice": null,
-      "source": "Order form p.2: \"renews automatically unless notice is given 30 days prior\"" }
+    {
+      "id": "hubspot",
+      "vendor": "HubSpot",
+      "amount": 6000000,
+      "renewsOn": "2026-12-20",
+      "noticeDays": 30,
+      "term": "annual",
+      "monthlyEquivalent": 500000,
+      "choice": null,
+      "source": "Order form p.2: \"renews automatically unless notice is given 30 days prior\""
+    }
   ],
   "invoices": [
-    { "id": "acme", "customer": "Acme Corp", "amount": 1200000, "dueOn": "2026-10-21", "drafted": false, "collected": false },
-    { "id": "brightline", "customer": "Brightline", "amount": 600000, "dueOn": "2026-10-28", "drafted": false, "collected": false }
+    {
+      "id": "acme",
+      "customer": "Acme Corp",
+      "amount": 1200000,
+      "dueOn": "2026-10-21",
+      "drafted": false,
+      "collected": false
+    },
+    {
+      "id": "brightline",
+      "customer": "Brightline",
+      "amount": 600000,
+      "dueOn": "2026-10-28",
+      "drafted": false,
+      "collected": false
+    }
   ],
-  "suppression": { "count": 41, "since": "2026-10-01", "rule": "date moved 7+ days" },
+  "suppression": {
+    "count": 41,
+    "since": "2026-10-01",
+    "rule": "date moved 7+ days",
+    "examples": [
+      {
+        "what": "AWS bill up $1.2K",
+        "moved": "less than a day"
+      },
+      {
+        "what": "Two new Figma seats",
+        "moved": "less than a day"
+      },
+      {
+        "what": "Stripe payout landed 3 days late",
+        "moved": "no change"
+      },
+      {
+        "what": "Annual Notion renewal, $1,920",
+        "moved": "about a day"
+      }
+    ]
+  },
   "alerts": [
-    { "id": "dup-1", "kind": "possible-duplicate", "vendor": "Northstar Office Supply", "amount": 84000,
-      "dates": ["2026-10-22", "2026-10-28"], "status": "open" }
+    {
+      "id": "dup-1",
+      "kind": "possible-duplicate",
+      "vendor": "Northstar Office Supply",
+      "amount": 84000,
+      "dates": [
+        "2026-10-22",
+        "2026-10-28"
+      ],
+      "status": "open"
+    }
   ]
 }

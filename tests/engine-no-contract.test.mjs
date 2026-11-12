@@ -162,8 +162,8 @@ test('an as-of date that is not a real YYYY-MM-DD builds no scenario', () => {
       asOf, vendor: '', amount: '', renewsOn: '', noticeDays: '',
     });
     assert.equal(sc, null, `asOf ${JSON.stringify(asOf)} must not build a scenario`);
-    assert.deepEqual(setupOutcome(sc), { note: 'Some numbers are missing.', ready: false });
-    assert.equal(setupResult(sc), 'Some numbers are missing.');
+    assert.deepEqual(setupOutcome(sc), { note: 'Check the As of date.', ready: false });
+    assert.equal(setupResult(sc), 'Check the As of date.');
     assert.equal(setupReady(sc), false);
   }
 });
@@ -183,7 +183,7 @@ test('a typed zero cushion is out of range, not silently six', () => {
     asOf: '2026-11-11', vendor: '', amount: '', renewsOn: '', noticeDays: '',
   });
   assert.equal(sc.cushionMonths, 0, 'a typed zero must not become 6');
-  assert.equal(setupResult(sc), 'Some numbers are missing.');
+  assert.equal(setupResult(sc), 'Cushion months must be 1 or more.');
   assert.equal(setupReady(sc), false);
 });
 

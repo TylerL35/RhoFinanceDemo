@@ -10,6 +10,44 @@ Port 8000 is occupied on this machine by an unrelated server, so here use:
 
     python3 -m http.server 8019 --directory public
 
+The service worker is not registered on `localhost` (it is cache-first, so it would serve
+old code after every edit). To test offline locally, open `/?offline`.
+
+## Present
+
+Open `/?present`. It starts from the fixture every time (nothing from rehearsal is
+kept) and shows `Step n / 10` in the footer. No mouse needed:
+
+| Key | Does |
+|---|---|
+| `→` | Next step. Steps 3, 5 and 7 are beats on the same screen: confirm the 3 hires, choose Cancel on the HubSpot renewal, draft the 2 reminders |
+| `←` | Back one step, undoing a beat the keys did (never one you clicked) |
+| `1`–`4` | On Home, guess May / Jun / Jul / Aug 2027 |
+| `Esc` | Back to Home |
+| `Shift` + `Esc` | Start over (clears every choice and what-if) |
+
+Order: Home → Raise-by (the dot slides from Jul 12 to Apr 11) → confirm hires (the bar
+re-splits, the date does not move) → Bill Pay → Cancel (+9 days, the date pill flashes,
+the draft email appears) → Invoicing → draft reminders → Needs a look → Trust → Ask Rho.
+
+The renewal beat picks Cancel (`PRESENTER_CHOICE` in `public/js/app.js`); set it to
+`'monthly'` to show the near-neutral option instead. After Cancel, Trust and Ask Rho
+describe the company with the renewal cancelled (Apr 20, 2.7 months), because every
+screen re-derives from the same scenario.
+
+Live what-if: on Raise-by, click the "What if" box, type `hire 2 more in March`, press
+Enter. What-if hires are hypothetical: the bar, the confirm card and Ask Rho keep
+describing the real company, and the headline says the date without the what-if.
+
+## Test
+
+    node --test tests/*.test.mjs
+
+## Fonts
+
+Inter (400, 500) and DM Mono (400), SIL OFL 1.1, subset to Latin and bundled in
+`public/assets/fonts` with their licences. No CDN.
+
 ## Regenerate the sandbox snapshot
 
     RHO_API_TOKEN=demo node scripts/fetch-rho-sandbox.mjs

@@ -1,31 +1,56 @@
-const HINT = 'Try: hire 2 more in March · the raise takes 3 months longer · cancel hubspot';
+import { esc, realScenario } from './common.js';
+import { noticeState } from '../engine.js';
 
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => (
-  { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]
-));
+// The hint only suggests what this company can actually model: no hires
+// without a payroll baseline, no cancel once the notice window has closed or
+// when the vendor name is more than one word (the grammar takes one word).
+export function tipsFor(state) {
+  const sc = realScenario(state);
+  const tips = [];
+  if ((sc?.payroll ?? []).some((p) => !p.whatif)) tips.push('hire 2 more in March');
+  tips.push('the raise takes 3 months longer');
+  const c = sc?.contracts?.[0];
+  if (c && !c.choice && /^[a-z0-9_-]+$/i.test(c.vendor)) {
+    const open = c.id === 'hubspot' ? noticeState(sc).canCancel : true;
+    tips.push(open ? `cancel ${c.vendor.toLowerCase()}` : `switch ${c.vendor.toLowerCase()} to monthly`);
+  } else {
+    tips.push('raise prices 10%');
+  }
+  return tips;
+}
 
-// The box is stateless markup: app.applyWhatIf() owns the parse, the echo, and
-// the snapshot. mountWhatIf() only prints the state the app already decided on.
-export function mountWhatIf(el, state = globalThis.app?.state) {
-  if (!el) return;
+export const hintFor = (state) => `Try: ${tipsFor(state).join(' · ')}`;
 
+// Stateless markup: app.applyWhatIf() owns the parse, the echo, the result and
+// the snapshot. This only prints what the app already decided. The form makes
+// Enter submit, so a presenter typing live never needs the mouse.
+export function whatifHtml(state) {
   const s = state ?? {};
   const intents = s.appliedIntents ?? [];
-  const echo = s.lastEcho ?? HINT;
-  const color = s.lastEchoOk === false ? '#08A68A' : '#747D79';
+  const refused = s.lastEchoOk === false;
+  const echo = s.lastEcho ?? hintFor(s);
   const undo = intents.length
-    ? `<button class="btn ghost" style="padding:10px 14px" onclick="app.undoWhatIf()">Undo</button>`
+    ? '<button type="button" class="btn ghost" onclick="app.undoWhatIf()">Undo</button>'
+    : '';
+  const result = intents.length && s.whatifResult && !refused
+    ? `<p class="whatif-result" data-flash="whatifResult">${esc(s.whatifResult)}</p>`
     : '';
 
-  el.innerHTML = `
-    <div class="card">
-      <h2>What if…</h2>
-      <div class="row">
-        <input id="whatif" autocomplete="off" style="flex:1;min-width:240px;padding:10px;border:1px solid #D7E0DE;border-radius:6px;background:#fff"
-          placeholder="hire 2 more in March" />
-        <button class="btn" onclick="app.applyWhatIf()">Try it</button>
+  return `
+    <section class="section whatif" id="whatif-box">
+      <h3 class="section-title">What if…</h3>
+      <form class="row" onsubmit="event.preventDefault(); app.applyWhatIf()">
+        <input id="whatif" autocomplete="off" spellcheck="false" aria-label="What if"
+          placeholder="${esc(tipsFor(s)[0])}" />
+        <button type="submit" class="btn ghost">Try it</button>
         ${undo}
-      </div>
-      <p class="muted" id="whatif-echo" aria-live="polite" style="margin-top:10px;color:${color}">${esc(echo)}</p>
-    </div>`;
+      </form>
+      <p class="${refused ? 'echo refused' : 'muted echo'}" id="whatif-echo" aria-live="polite">${esc(echo)}</p>
+      ${result}
+    </section>`;
+}
+
+export function mountWhatIf(el, state = globalThis.app?.state) {
+  if (!el) return;
+  el.innerHTML = whatifHtml(state);
 }

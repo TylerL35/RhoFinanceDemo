@@ -35,7 +35,7 @@ test('home renders a date when cash crosses, and a sentence when it never does',
   const { home } = await import('../public/js/screens/home.js');
 
   const normal = home({ state: { scenario: fixture, guesses: { made: false, value: null } } });
-  assert.ok(normal.includes('Apr 2027'), 'fixture home names the raise-by month');
+  assert.ok(normal.includes('Raise-by holds at Jul 2027'), 'fixture home names the date the plan pointed to (deck copy)');
   assert.ok(!normal.includes('Invalid Date'));
   assert.ok(!normal.includes('1970'));
 
@@ -87,7 +87,7 @@ test('?present clears rehearsal state and flags it before boot renders', async (
   assert.equal(store.has('raise-by.scenario.v1'), false, 'rehearsal scenario is cleared');
   assert.equal(app.state.scenario.cash, fixture.cash, 'boot used the fixture, not rehearsal state');
   assert.ok(globalThis.document.getElementById().innerHTML.includes('Your raise-by date moved this week.'));
-  assert.ok(globalThis.document.getElementById().innerHTML.includes('Apr 2027'));
+  assert.ok(globalThis.document.getElementById().innerHTML.includes('Jul 2027'));
 });
 
 test('render accepts a string or { html, after } and runs after()', async () => {

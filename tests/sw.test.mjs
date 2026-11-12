@@ -5,9 +5,12 @@ import vm from 'node:vm';
 
 const PUBLIC = new URL('../public/', import.meta.url);
 
+// Dotfiles (Finder's .DS_Store) are not shipped files and are never precached.
 function walk(dir, base = '') {
-  return readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
-    e.isDirectory() ? walk(new URL(`${e.name}/`, dir), `${base}${e.name}/`) : [`${base}${e.name}`]);
+  return readdirSync(dir, { withFileTypes: true })
+    .filter((e) => !e.name.startsWith('.'))
+    .flatMap((e) =>
+      e.isDirectory() ? walk(new URL(`${e.name}/`, dir), `${base}${e.name}/`) : [`${base}${e.name}`]);
 }
 
 test('the service worker precaches every shipped file', () => {

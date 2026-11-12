@@ -87,7 +87,7 @@ test('the screen prints the derived figures and the two verbatim lines', () => {
     `figures are not the derived ones: ${copy}`
   );
   assert.ok(
-    copy.includes('Sandbox data, fetched 2026-11-12. No network call happens on this screen.'),
+    copy.includes('Sandbox data, fetched Nov 12, 2026. No network call happens on this screen.'),
     'the label line is not verbatim'
   );
   assert.ok(

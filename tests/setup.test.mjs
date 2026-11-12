@@ -90,10 +90,17 @@ test('a no-burn company is refused in words', () => {
 
 test('a missing number is refused as missing', () => {
   const noCash = setupResult(buildScenario({ ...healthy, cash: '' }));
-  assert.equal(noCash, 'Some numbers are missing.');
+  assert.equal(noCash, 'Add your cash today.');
 
   const noRevenue = setupResult(buildScenario({ ...healthy, revenue: '' }));
-  assert.equal(noRevenue, 'Some numbers are missing.');
+  assert.equal(noRevenue, 'Add your monthly revenue (0 is fine).');
+
+  const noSpend = setupResult(buildScenario({ ...healthy, spend: '' }));
+  assert.equal(noSpend, 'Add your monthly spend.');
+
+  // An empty form is missing numbers, never "cash never runs out" (Number('') is 0).
+  const empty = setupResult(buildScenario({ cash: '', revenue: '', spend: '', cushion: '', asOf: '', vendor: '', amount: '', renewsOn: '', noticeDays: '' }));
+  assert.equal(empty, 'Add your cash today.');
 
   for (const bad of badTokens) {
     assert.ok(!noCash.includes(bad), `missing-cash note contains ${bad}`);
@@ -109,16 +116,16 @@ test('a half-typed contract is refused as missing, not projected', () => {
     { ...healthy, renewsOn: 'next quarter' },
   ]) {
     const sc = buildScenario(f);
-    assert.equal(setupResult(sc), 'Some numbers are missing.');
+    assert.equal(setupResult(sc), 'Finish the contract: add its amount and renewal date, or clear its name.');
     assert.equal(setupReady(sc), false);
   }
 });
 
 test('a healthy company is told its own date', () => {
   const sc = buildScenario(healthy);
-  assert.equal(setupResult(sc), 'Raise by 2028-10-30.');
+  assert.equal(setupResult(sc), 'Raise by Oct 30, 2028.');
   assert.equal(setupReady(sc), true);
-  assert.deepEqual(setupOutcome(sc), { note: 'Raise by 2028-10-30.', ready: true });
+  assert.deepEqual(setupOutcome(sc), { note: 'Raise by Oct 30, 2028.', ready: true });
 });
 
 test('only a note with a date is ready to navigate', () => {
@@ -188,7 +195,7 @@ test('setup prints the ruled headline, lead, labels and one mint button', () => 
   const html = setup({ state: {} });
   const copy = text(html);
 
-  assert.ok(copy.includes('Six numbers and a date.'), 'headline is not verbatim');
+  assert.ok(copy.includes('Your numbers, your date.'), 'headline is not verbatim');
   assert.ok(copy.includes('Nothing leaves this browser.'), 'lead is not verbatim');
   for (const label of [
     'Cash today', 'Monthly revenue', 'Monthly spend', 'Cushion months', 'As of',
@@ -201,6 +208,10 @@ test('setup prints the ruled headline, lead, labels and one mint button', () => 
     assert.ok(html.includes(`id="${id}"`), `field missing: ${id}`);
   }
   assert.ok(html.includes('value="2026-11-11"'), 'the as-of field defaults to the fixture date');
+  // The example company is filled in as values, not placeholders, so the
+  // button works at once.
+  assert.ok(html.includes('id="f-cash" value="900,000"'), 'cash is not prefilled');
+  assert.ok(!html.includes('placeholder='), 'placeholders look like values; the form uses real values');
   assert.ok(html.includes('onclick="app.saveSetup()"'), 'the button does not call app.saveSetup');
   assert.ok(copy.includes('Show my date'), 'button copy is not verbatim');
   assert.equal(mintCount(html), 1, 'the mint button must be the only mint on the screen');
@@ -272,7 +283,7 @@ test('a healthy entry saves the value, shows the date and navigates to reveal', 
 
   app.saveSetup();
 
-  assert.equal(els.get('setup-note').textContent, 'Raise by 2028-10-30.');
+  assert.equal(els.get('setup-note').textContent, 'Raise by Oct 30, 2028.');
   assert.equal(app.route, '/reveal', 'a real date navigates to the reveal');
   assert.equal(app.state.scenario.source, 'local');
   assert.deepEqual(app.state.appliedIntents, [], 'an old what-if stack must not survive new numbers');

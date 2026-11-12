@@ -9,6 +9,11 @@
 // leaves it alone keeps serving the old index.html and JS.
 const CACHE = 'raise-by-v1';
 const PRECACHE = [
+  './assets/fonts/DMMono-OFL.txt',
+  './assets/fonts/DMMono-Regular.woff',
+  './assets/fonts/Inter-Medium.woff',
+  './assets/fonts/Inter-OFL.txt',
+  './assets/fonts/Inter-Regular.woff',
   './data/fixture-seed.json',
   './data/rho-sandbox.snapshot.json',
   './index.html',
@@ -30,6 +35,7 @@ const PRECACHE = [
   './js/screens/invoices.js',
   './js/screens/reveal.js',
   './js/screens/setup.js',
+  './js/screens/timeline.js',
   './js/screens/trust.js',
   './js/screens/whatif.js',
   './styles.css',

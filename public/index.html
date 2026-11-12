@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#FFFFFF">
 <title>Raise-By · Rho</title>
 <link rel="stylesheet" href="./styles.css">
 </head>
@@ -10,7 +11,15 @@
 <div id="app"></div>
 <script type="module" src="./js/app.js"></script>
 <script>
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
+  // Offline cache for the hosted demo. Not on localhost: the worker is
+  // cache-first, so during development it would keep serving old code after
+  // every edit. Add ?offline to test the worker locally.
+  (function () {
+    var local = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+    if ('serviceWorker' in navigator && (!local || /[?&]offline\b/.test(location.search))) {
+      navigator.serviceWorker.register('./sw.js').catch(function () {});
+    }
+  })();
 </script>
 </body>
 </html>

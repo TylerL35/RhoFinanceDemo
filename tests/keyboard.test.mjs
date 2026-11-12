@@ -2,8 +2,6 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-const SCRIPT = ['/', '/reveal', '/bill/hubspot', '/invoices', '/alerts/duplicate', '/trust', '/claude'];
-
 // Boots public/js/app.js in Node with the browser bits it needs stubbed. The
 // module caches after the first import, so the listeners are captured once and
 // shared: a fresh keydown listener per test would not exist.
@@ -72,29 +70,82 @@ test('app.js registers one keydown listener', async () => {
   assert.equal(listeners.keydown?.length, 1);
 });
 
-test('arrow keys walk the scripted order and Escape returns to the start', async () => {
-  const { app, listeners } = await bootWithKeyboard();
+// The presenter path: ten steps, three of them beats on the same screen.
+const STEP_ROUTES = ['/', '/reveal', '/reveal', '/bill/hubspot', '/bill/hubspot',
+  '/invoices', '/invoices', '/alerts/duplicate', '/trust', '/claude'];
 
-  app.go('/');
-  for (const expected of SCRIPT.slice(1)) {
+test('arrow keys walk the presenter steps, including the beats, and undo them going back', async () => {
+  const { app, listeners } = await bootWithKeyboard();
+  app.reset();
+  const fresh = structuredClone(app.state.scenario);
+  assert.equal(app.step, 0);
+  assert.equal(app.stepCount, STEP_ROUTES.length);
+
+  const seen = [];
+  for (let i = 1; i < STEP_ROUTES.length; i += 1) {
     press(listeners, 'ArrowRight');
-    assert.equal(app.route, expected);
+    seen.push(app.route);
+    assert.equal(app.step, i);
   }
+  assert.deepEqual(seen, STEP_ROUTES.slice(1), 'the routes visited are the script');
+
+  // The beats happened without the mouse.
+  assert.ok(app.state.scenario.payroll.every((p) => p.confirmed), 'the hires were not confirmed');
+  assert.equal(app.state.scenario.contracts[0].choice, 'cancel', 'the renewal option was not chosen');
+  assert.ok(app.state.scenario.invoices.every((i) => i.drafted), 'the reminders were not drafted');
 
   press(listeners, 'ArrowRight');
-  assert.equal(app.route, '/claude', 'ArrowRight stops at the last slide');
+  assert.equal(app.route, '/claude', 'ArrowRight stops at the last step');
 
-  for (const expected of [...SCRIPT].slice(0, -1).reverse()) {
+  for (let i = STEP_ROUTES.length - 2; i >= 0; i -= 1) {
     press(listeners, 'ArrowLeft');
-    assert.equal(app.route, expected);
+    assert.equal(app.step, i);
+    assert.equal(app.route, STEP_ROUTES[i]);
   }
-
   press(listeners, 'ArrowLeft');
-  assert.equal(app.route, '/', 'ArrowLeft stops at the first slide');
+  assert.equal(app.route, '/', 'ArrowLeft stops at the first step');
+  assert.deepEqual(app.state.scenario, fresh, 'walking back undid every beat');
 
   app.go('/trust');
   press(listeners, 'Escape');
   assert.equal(app.route, '/', 'Escape returns to the first slide');
+  assert.equal(app.step, 0);
+});
+
+test('a beat the presenter already clicked is skipped, and not undone going back', async () => {
+  const { app, listeners } = await bootWithKeyboard();
+  app.reset();
+  press(listeners, 'ArrowRight'); // -> /reveal
+  app.confirmPayroll('yes'); // clicked by hand
+  press(listeners, 'ArrowRight'); // the confirm beat: already done
+  assert.equal(app.step, 2);
+  press(listeners, 'ArrowLeft');
+  assert.ok(app.state.scenario.payroll.every((p) => p.confirmed), 'a hand click was undone by the keys');
+});
+
+test('keys 1-4 pick a guess on Home, and Shift+Escape starts over', async () => {
+  const { app, listeners } = await bootWithKeyboard();
+  app.reset();
+  press(listeners, '3');
+  assert.deepEqual(app.state.guesses, { made: true, value: 'Jul' });
+  press(listeners, 'ArrowRight');
+  press(listeners, 'ArrowRight');
+  assert.ok(app.state.scenario.payroll.every((p) => p.confirmed));
+  for (const fn of listeners.keydown) fn({ key: 'Escape', shiftKey: true, target: { tagName: 'BODY' }, preventDefault() {} });
+  assert.equal(app.route, '/');
+  assert.equal(app.step, 0);
+  assert.deepEqual(app.state.guesses, { made: false, value: null });
+  assert.ok(app.state.scenario.payroll.every((p) => !p.confirmed), 'Shift+Escape did not start over');
+});
+
+test('navigating by the sidebar moves the presenter step to that screen', async () => {
+  const { app, listeners } = await bootWithKeyboard();
+  app.reset();
+  app.go('/invoices');
+  assert.equal(app.step, 5);
+  press(listeners, 'ArrowRight');
+  assert.equal(app.route, '/invoices', 'the next step is the draft beat on the same screen');
+  assert.ok(app.state.scenario.invoices.every((i) => i.drafted));
 });
 
 test('keys are ignored while typing in the what-if box', async () => {

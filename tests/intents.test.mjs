@@ -21,7 +21,9 @@ test('hire two more in March', () => {
   assert.equal(sc.payroll.length, 5);
   assert.equal(sc.payroll[4].startsOn, '2027-03-01');
   assert.equal(sc.payroll[4].monthlyCost, 900000);
-  assert.equal(sc.payroll[4].confirmed, true);
+  assert.equal(sc.payroll[4].confirmed, false, 'a what-if hire is never confirmed');
+  assert.equal(sc.payroll[4].whatif, true, 'a what-if hire is flagged as hypothetical');
+  assert.equal(sc.payroll[4].id, 'whatif-2027-03-01-2');
 });
 
 test('"delay the raise" is rejected with an explanation, not mapped to cushion', () => {

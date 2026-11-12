@@ -1,171 +1,223 @@
-import { shell, eyebrow } from './common.js';
-import { mountConfirm } from './confirm.js';
-import { mountBar } from './bar.js';
-import { mountWhatIf } from './whatif.js';
-import { range, netBurn, grossSpend, bufferAt } from '../engine.js';
-import { parseDate, fmtMonthDay } from '../calendar.js';
+import { shell, eyebrow, chip, realScenario, hasWhatIf } from './common.js';
+import { confirmHtml } from './confirm.js';
+import { barHtml } from './bar.js';
+import { whatifHtml } from './whatif.js';
+import { timelineHtml } from './timeline.js';
+import { range, netBurn, raiseBy, attribute, activeContract } from '../engine.js';
+import { parseDate, fmtDay, namedDate, periodOf, diffDays } from '../calendar.js';
 import { fmt, derived } from '../derived.js';
 
 // Every number in the copy below is a derived() object, formatted by fmt(), so the
 // provenance is carried next to the value that the screen prints.
 const at = (label, value, source) => ({ label, value, source });
 
-const fullMonth = (d) => d.toLocaleString('en-US', { month: 'long', timeZone: 'UTC' });
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const GUESS_YEAR = 2027; // the home card offers May to Aug 2027 (BUILD_PROMPT screen 1)
 
-// The deck names a date by the part of the month it lands in:
-// early 1-10, mid 11-20, late 21-end. Fixture: 2027-03-01 -> early March,
-// 2027-04-11 -> mid April, 2027-04-28 -> late April. The headline and receipt
-// use the same derivation on the projected date, so a judge's own landing day
-// is named honestly.
-const partOf = (d) => (d.getUTCDate() <= 10 ? 'early' : d.getUTCDate() <= 20 ? 'mid' : 'late');
+// 10.97 prints as "11", 29.6 prints as "29.6": a whole number only when it is one.
+const monthsText = (x) => (Math.abs(x - Math.round(x)) < 0.1 ? String(Math.round(x)) : x.toFixed(1));
 
-function periodOf(d) {
-  return `${partOf(d)} ${fullMonth(d)}`;
-}
+const sameBurn = (a, b) => Math.abs(a - b) < 100; // within a dollar
 
-// The headline and receipt name a single date, where standard usage hyphenates
-// only "mid-April"; "early April" and "late April" take no hyphen. periodOf()
-// above stays space-only because it feeds the range sentence, where no part is
-// ever hyphenated.
-const namedDate = (d) => `${partOf(d)}${partOf(d) === 'mid' ? '-' : ' '}${fullMonth(d)}`;
-
-// The engine reads a missing contract as zero (activeContract() in engine.js),
-// so this screen hands it the real scenario, contract-less or not.
-
-export function reveal({ state }) {
-  const sc = state.scenario;
+// The math line. With a flat burn it is the deck's sentence: cash after the
+// renewal, divided by burn, minus the cushion. When burn changes before the date
+// (a hire in March, monthly billing) a single division would not land on the
+// date, so the line says what changes and when instead of printing false math.
+function mathLine(sc, projected) {
   const asOf = parseDate(sc.asOf);
   const y = asOf.getUTCFullYear();
   const m = asOf.getUTCMonth() + 1;
-  const contract = sc.contracts?.[0] ?? null;
-  const payrollTotal = sc.payroll.reduce((sum, p) => sum + p.monthlyCost, 0);
+  const c = activeContract(sc);
+  const renews = c ? parseDate(c.renewsOn) : null;
+  const hits = !!(c && !['cancel', 'monthly'].includes(c.choice) && renews > asOf && renews <= projected);
+  const cashAfterValue = sc.cash - (hits ? c.amount : 0);
+  const burn0Value = netBurn(sc, y, m);
 
-  const r = range(sc);
-  const band = r.band;
-  const projected = r.base;
-
-  const cash = derived(sc.cash, 'cents',
-    [at('cash', sc.cash, 'scenario')], 'scenario.cash');
-  const burn = derived(netBurn(sc, y, m), 'cents',
-    [at('gross spend', grossSpend(sc, y, m), 'engine'),
-     at('revenue', sc.revenue.current, 'scenario'),
-     at('payroll inside gross', payrollTotal, 'payroll')], 'grossSpend - revenue');
-  const buffer = derived(bufferAt(sc, asOf), 'cents',
-    [at('cushion', sc.cushionMonths, 'scenario'),
-     at('net burn', netBurn(sc, y, m), 'engine')], 'sum of next cushionMonths of netBurn');
-  const runwayMonths = derived((sc.cash - bufferAt(sc, asOf)) / netBurn(sc, y, m), 'months',
-    [at('cash', sc.cash, 'scenario'),
-     at('buffer', bufferAt(sc, asOf), 'engine'),
-     at('burn', netBurn(sc, y, m), 'engine')], '(cash - buffer) / netBurn');
+  const cashAfter = derived(cashAfterValue, 'cents',
+    [at('cash', sc.cash, 'scenario'), at('renewal', hits ? c.amount : 0, 'contract')],
+    'cash - renewal when it lands before the date');
+  const burn = derived(burn0Value, 'cents',
+    [at('net burn this month', burn0Value, 'engine'), at('revenue', sc.revenue.current, 'scenario')],
+    'grossSpend - revenue, as-of month');
   const cushion = derived(sc.cushionMonths, 'count',
     [at('cushion months', sc.cushionMonths, 'scenario')], 'scenario.cushionMonths');
-  const monthsSampled = derived(sc.revenue.trailing.length, 'count',
-    [at('trailing months', sc.revenue.trailing.length, 'scenario'),
-     ...sc.revenue.trailing.map((t) => at(`ratio ${t.month}`, t.actual / t.expected, 'revenue.trailing'))],
-    'revenue.trailing.length');
+  const day = fmtDay(projected, asOf);
 
-  const dateD = derived(projected ? projected.getTime() : null, 'date',
-    [at('cash', sc.cash, 'scenario'),
-     at('net burn', netBurn(sc, y, m), 'engine'),
-     at('buffer', bufferAt(sc, projected ?? asOf), 'engine'),
-     at('cushion', sc.cushionMonths, 'scenario')],
-    'first day cash <= buffer; buffer = sum of next cushionMonths of netBurn');
-  const lowWhen = derived(r.low ? periodOf(r.low) : null, 'text',
-    [at('range low date', r.low ? r.low.getTime() : null, 'engine'),
-     at('projected revenue', Math.round(band.low), 'engine'),
-     at('cash', sc.cash, 'scenario')],
-    'early / mid / late from range().low day, full month name');
-  const highWhen = derived(r.high ? periodOf(r.high) : null, 'text',
-    [at('range high date', r.high ? r.high.getTime() : null, 'engine'),
-     at('projected revenue', Math.round(band.high), 'engine'),
-     at('cash', sc.cash, 'scenario')],
-    'early / mid / late from range().high day, full month name');
-  const bandLow = derived(Math.round(band.low), 'cents',
-    [at('planned revenue', sc.plan.plannedRevenue, 'fixture'),
-     at('mean trailing ratio', Math.round(band.mean * 10000) / 10000, 'engine'),
-     at('sample deviation', Math.round(band.s * 10000) / 10000, 'engine')],
-    'plannedRevenue * max(0.85, mean - s)');
-  const bandHigh = derived(Math.round(band.high), 'cents',
-    [at('planned revenue', sc.plan.plannedRevenue, 'fixture'),
-     at('mean trailing ratio', Math.round(band.mean * 10000) / 10000, 'engine'),
-     at('sample deviation', Math.round(band.s * 10000) / 10000, 'engine')],
-    'plannedRevenue * min(1.05, mean + s)');
+  // First month (up to the date) whose burn differs from this month's.
+  let change = null;
+  for (let i = 1; i <= 36; i += 1) {
+    const yy = y + Math.floor((m - 1 + i) / 12);
+    const mm = ((m - 1 + i) % 12) + 1;
+    if (Date.UTC(yy, mm - 1, 1) > projected.getTime()) break;
+    const b = netBurn(sc, yy, mm);
+    if (!sameBurn(b, burn0Value)) {
+      const ny = yy + Math.floor(mm / 12);
+      const nm = (mm % 12) + 1;
+      const settled = netBurn(sc, ny, nm); // a mid-month start is prorated in its first month
+      change = { label: `${MONTHS[mm - 1]} ${yy}`, value: sameBurn(settled, b) ? b : settled };
+      break;
+    }
+  }
 
-  const payrollMonthly = derived(payrollTotal, 'cents',
-    [at('payroll rows', sc.payroll.length, 'payroll'),
-     ...sc.payroll.map((p) => at(p.label, p.monthlyCost, 'payroll'))], 'sum of payroll.monthlyCost');
-  const renewal = contract ? derived(contract.amount, 'cents',
-    [at('contract amount', contract.amount, 'contract'),
-     at('renews on', parseDate(contract.renewsOn).getTime(), 'contract')], 'contracts[0].amount') : null;
-  const shortfall = derived(sc.plan.plannedRevenue - sc.revenue.current, 'cents',
-    [at('planned revenue', sc.plan.plannedRevenue, 'fixture'),
-     at('current revenue', sc.revenue.current, 'scenario')], 'plannedRevenue - revenue.current');
+  const after = hits ? ' after the renewal' : '';
+  if (!change) {
+    const months = derived(monthsText(cashAfterValue / burn0Value), 'text',
+      [at('cash after renewal', cashAfterValue, 'engine'), at('net burn', burn0Value, 'engine')],
+      'cashAfter / netBurn');
+    return `${fmt(cashAfter)} cash${after} ÷ ${fmt(burn)} a month = ${fmt(months)} months. Minus your ${fmt(cushion)}-month cushion = start by ${day}.`;
+  }
+  const later = derived(change.value, 'cents',
+    [at(`net burn from ${change.label}`, change.value, 'engine')], 'netBurn at the first month that differs');
+  return `${fmt(cashAfter)} cash${after}. Burn is ${fmt(burn)} a month now and ${fmt(later)} from ${change.label}. Keeping ${fmt(cushion)} months of burn in reserve, cash reaches that line on ${day}.`;
+}
 
-  const rangeSentence = r.low && r.high
-    ? `Estimated range ${fmt(lowWhen)} to ${fmt(highWhen)}.`
-    : '';
-  const lead = projected === null
-    ? `<p class="lead">Cash does not run out within three years at this rate.</p>`
-    : (rangeSentence ? `<p class="lead">${rangeSentence}</p>` : '');
-  const receipt = projected === null
-    ? ''
-    : `<p class="muted" style="margin:-16px 0 24px">Start raising by ${namedDate(projected)} ${projected.getUTCFullYear()} (base case ${fmtMonthDay(projected)})</p>`;
+function guessLines(state, projected) {
+  const g = state?.guesses;
+  if (!g?.made || !g.value || !projected) return { above: '', below: '' };
+  const gi = MONTHS.indexOf(g.value);
+  if (gi === -1) return { above: '', below: '' };
+  const diff = (GUESS_YEAR * 12 + gi) - (projected.getUTCFullYear() * 12 + projected.getUTCMonth());
+  const n = Math.abs(diff);
+  const below = diff === 0
+    ? 'Right month.'
+    : `About ${n} month${n === 1 ? '' : 's'} ${diff > 0 ? 'sooner' : 'later'} than you thought.`;
+  return {
+    above: `<div class="guess-line">You guessed ${g.value} ${GUESS_YEAR}</div>`,
+    below: `<p class="guess-delta" data-flash="guessDelta">${below}</p>`,
+  };
+}
 
-  // The choice is already inside the scenario, so the receipt above has moved.
-  // This line is how a reader sees why it moved.
+function sourcesHtml(sc, local) {
+  const asOf = parseDate(sc.asOf);
+  const contract = activeContract(sc);
+  const rows = [];
+  const row = (k, v, src) => `<tr><td>${k}</td><td class="num">${v}</td><td>${src}</td></tr>`;
+
+  if (local) {
+    const burn = netBurn(sc, asOf.getUTCFullYear(), asOf.getUTCMonth() + 1);
+    rows.push(row('Cash', fmt(derived(sc.cash, 'cents', [at('cash', sc.cash, 'scenario')], 'scenario.cash')), chip('Entered by you')));
+    rows.push(row('Revenue', `${fmt(derived(sc.revenue.current, 'cents', [at('revenue', sc.revenue.current, 'scenario')], 'revenue.current'))} a month`, chip('Entered by you')));
+    rows.push(row('Net burn', `${fmt(derived(burn, 'cents', [at('net burn', burn, 'engine')], 'spend - revenue'))} a month`, chip('Spend minus revenue')));
+  } else {
+    const payroll = sc.payroll.filter((p) => !p.whatif);
+    if (payroll.length) {
+      const total = payroll.reduce((s, p) => s + p.monthlyCost, 0);
+      const ok = payroll.every((p) => p.confirmed);
+      const v = derived(total, 'cents',
+        [at('payroll rows', payroll.length, 'payroll'), ...payroll.map((p) => at(p.label, p.monthlyCost, 'payroll'))],
+        'sum of payroll.monthlyCost');
+      rows.push(row('Payroll', `+${fmt(v)} a month`,
+        `${chip('Gusto debits')} ${ok ? chip('confirmed by you', 'ok') : chip('not confirmed yet', 'pending')}`));
+    }
+  }
+
+  if (contract) {
+    const v = derived(contract.amount, 'cents',
+      [at('contract amount', contract.amount, 'contract'), at('renews on', parseDate(contract.renewsOn).getTime(), 'contract')],
+      'contracts[0].amount');
+    rows.push(row(`${contract.vendor} renewal`, `${fmt(v)} on ${fmtDay(parseDate(contract.renewsOn), asOf)}`,
+      chip(contract.source.split(':')[0])));
+  } else {
+    rows.push(row('Contract', 'No contract entered', '<span class="muted">Add one in Use my numbers</span>'));
+  }
+
+  if (!local) {
+    const gap = sc.plan.plannedRevenue - sc.revenue.current;
+    const v = derived(gap, 'cents',
+      [at('planned revenue', sc.plan.plannedRevenue, 'fixture'), at('current revenue', sc.revenue.current, 'scenario')],
+      'plannedRevenue - revenue.current');
+    rows.push(gap > 0
+      ? row('Sales', `${fmt(v)} a month behind plan`, chip('Revenue deposits'))
+      : row('Sales', 'On plan', chip('Revenue deposits')));
+  }
+
+  return `
+    <section class="section">
+      <h3 class="section-title">Where the numbers come from</h3>
+      <table class="sources">${rows.join('')}</table>
+    </section>`;
+}
+
+export function reveal({ state }) {
+  const sc = state.scenario;
+  const real = realScenario(state) ?? sc;
+  const local = sc.source === 'local';
+  const whatIf = hasWhatIf(state);
+  const asOf = parseDate(sc.asOf);
+
+  const r = range(sc);
+  const projected = r.base;
+  const hasRange = !!(r.low && r.high && (sc.revenue.trailing?.length ?? 0) >= 2);
+
+  if (projected === null) {
+    const body = `
+      ${eyebrow('RAISE-BY')}
+      <h1>Raise-By cannot see a date yet.</h1>
+      <p class="lead">Cash does not run out within three years at this rate.</p>
+      ${local ? '<div class="row"><button class="btn ghost" onclick="app.reset()">Back to the demo company</button></div>' : ''}
+      ${sourcesHtml(sc, local)}`;
+    return shell({ route: '/reveal', body, footerRight: 'Reveal', state });
+  }
+
+  const year = projected.getUTCFullYear();
+  const guess = guessLines(state, projected);
+  const realDate = whatIf ? raiseBy(real) : projected;
+
+  const lead = hasRange
+    ? `<p class="lead">Estimated range ${periodOf(r.low)} to ${periodOf(r.high)}.</p>`
+    : `<p class="lead">${local ? 'A single date, not a range: there is no revenue history yet.' : 'A single date, not a range.'}</p>`;
+
+  const receipt = `<p class="receipt mono">Base case ${fmtDay(projected, asOf)}${hasRange ? ` · range ${fmtDay(r.low, asOf)} to ${fmtDay(r.high, asOf)}` : ''}${hasRange ? ` · from your last ${sc.revenue.trailing.length} months of sales` : ''}</p>`;
+
+  let whatIfLine = '';
+  if (whatIf && realDate) {
+    const d = diffDays(realDate, projected);
+    const moved = d === 0 ? 'No change.' : `This is ${Math.abs(d)} day${Math.abs(d) === 1 ? '' : 's'} ${d < 0 ? 'earlier' : 'later'}.`;
+    whatIfLine = `<p class="whatif-line">Without your what-if: ${namedDate(realDate)} (${fmtDay(realDate, asOf)}). ${moved}</p>`;
+  }
+
+  // The choice is already inside the scenario, so the date above has moved.
+  // This line is how a reader sees why.
   const included = { cancel: 'cancel requested', monthly: 'monthly requested', approve: 'renewal approved' };
-  const choice = state.choice?.hubspot;
+  const contract = activeContract(sc);
+  const choice = state.choice?.hubspot ?? contract?.choice ?? null;
   const includesLine = choice && included[choice]
-    ? `<p class="muted" style="margin:-16px 0 24px">Includes: ${contract?.vendor ?? 'HubSpot'} — ${included[choice]}.</p>`
+    ? `<p class="receipt">Includes your ${contract?.vendor ?? 'renewal'} choice: ${included[choice]}.</p>`
     : '';
 
-  const math = projected === null ? '' : `
-    <div class="card white">
-      <div class="mono">${fmt(cash)} cash after the renewal ÷ ${fmt(burn)} a month
-        = ${fmt(runwayMonths)}. Minus your ${fmt(cushion)}-month cushion = start by
-        ${fmt(dateD)}.</div>
-      <p class="muted" style="margin-top:10px">Range from your last
-        ${fmt(monthsSampled)} months: revenue
-        ${fmt(bandLow)} to ${fmt(bandHigh)}, a sample this small.</p>
+  // The plan-consistent anchor only exists for a company with a plan history.
+  const a = local ? null : attribute(real);
+  const anchor = a && a.anchor && a.totalMonths > 0 ? a.anchor : null;
+
+  const timeline = timelineHtml({
+    asOf, base: projected,
+    low: hasRange ? r.low : null, high: hasRange ? r.high : null,
+    anchor, before: whatIf ? realDate : null,
+  });
+
+  const math = `
+    <div class="card white math">
+      <div class="mono">${mathLine(sc, projected)}</div>
+      <div class="row math-links">
+        <button class="link" onclick="app.prefillWhatIf('the raise takes 3 months longer')">Change cushion</button>
+      </div>
     </div>`;
-
-  const contractRow = contract
-    ? `<tr><td style="padding:4px 0">${contract.vendor} renewal</td><td>${fmt(renewal)} on ${fmtMonthDay(parseDate(contract.renewsOn))}</td><td class="muted">${contract.source.split(':')[0]}</td></tr>`
-    : `<tr><td style="padding:4px 0">HubSpot renewal</td><td>No contract entered</td><td class="muted">Add one in Use my numbers</td></tr>`;
-
-  const sources = `
-    <div class="card">
-      <h2>Where the numbers come from</h2>
-      <table class="mono" style="width:100%;border-collapse:collapse">
-        <tr><td style="padding:4px 0">Payroll</td><td>+${fmt(payrollMonthly)} a month</td><td class="muted">Gusto debits</td></tr>
-        ${contractRow}
-        <tr><td style="padding:4px 0">Sales</td><td>${fmt(shortfall)} a month behind plan</td><td class="muted">revenue deposits</td></tr>
-      </table>
-    </div>`;
-
-  const headline = projected === null
-    ? `<h1>Raise-By cannot see a date yet.</h1>`
-    : `<h1>Start raising by ${namedDate(projected)} ${projected.getUTCFullYear()}.</h1>`;
 
   const body = `
-    ${eyebrow('RAISE-BY')}
-    ${headline}
+    ${eyebrow(whatIf ? 'RAISE-BY · WHAT-IF' : 'RAISE-BY')}
+    ${guess.above}
+    <h1 class="hero" data-flash="headline">Start raising by <span class="nowrap">${namedDate(projected)} ${year}.</span></h1>
     ${lead}
-    ${receipt}
+    ${guess.below}
+    ${whatIfLine}
     ${includesLine}
+    ${timeline}
+    ${receipt}
     ${math}
-    <div id="confirm-slot"></div>
-    <div id="bar-slot"></div>
-    <div id="whatif-slot"></div>
-    ${sources}`;
-  const html = shell({ route: '/reveal', body, footerRight: 'Reveal' });
-  // The slots only exist once shell() is in the document, so the mount waits one
-  // microtask. Guarded for Node, where reveal() is rendered without a DOM.
-  queueMicrotask(() => {
-    if (typeof document === 'undefined') return;
-    mountConfirm(document.getElementById('confirm-slot'));
-    mountBar(document.getElementById('bar-slot'));
-    mountWhatIf(document.getElementById('whatif-slot'), state);
-  });
-  return html;
+    ${local ? '' : confirmHtml(state)}
+    ${local ? '' : barHtml(state)}
+    ${sourcesHtml(real, local)}
+    ${whatifHtml(state)}
+    ${local ? '<div class="row"><button class="btn ghost" onclick="app.reset()">Back to the demo company</button></div>' : ''}`;
+  return shell({ route: '/reveal', body, footerRight: 'Reveal', state, pill: true });
 }

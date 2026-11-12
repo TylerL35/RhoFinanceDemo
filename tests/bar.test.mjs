@@ -54,7 +54,7 @@ test('bar prints the about-label split, the tenths total, and the anchor sentenc
   assert.ok(before.includes('Signed about 0.4 mo'));
   assert.ok(before.includes('Not certain yet about 2.6 mo'));
   assert.ok(
-    before.includes('Anchored to 2027-07-12. Forward-looking from today: payroll already paid is not undone.'),
+    before.includes('Anchored to Jul 12, 2027, the date your plan pointed to. Forward-looking from today: payroll already paid is not undone.'),
     'anchor line must keep the verbatim sentence'
   );
 
