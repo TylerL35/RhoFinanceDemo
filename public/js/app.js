@@ -1,4 +1,5 @@
-import { loadFixture, loadLocal, saveLocal, clearLocal } from './scenario.js';
+import { loadFixture, loadLocal, saveLocal, clearLocal, clone } from './scenario.js';
+import { parseIntent } from './intents.js';
 import * as home from './screens/home.js';
 import * as reveal from './screens/reveal.js';
 import * as bill from './screens/bill.js';
@@ -25,6 +26,12 @@ function initialState(fixture) {
     collections: { drafted: false, collected: [false, false] },
     alerts: { duplicate: null },
     guesses: { made: false, value: null },
+    // What-if is a bounded stack: each applied intent carries the echo it showed
+    // and the snapshot from before it, so Undo can put the scenario back.
+    appliedIntents: [],
+    intentBase: null,
+    lastEcho: null,
+    lastEchoOk: null,
   };
 }
 
@@ -93,6 +100,53 @@ export const app = {
   // The alert outcome is screen state only; it is never written to the scenario
   // and never reaches the engine.
   resolveAlert(kind) { this.state.alerts.duplicate = kind; this.render(); },
+  // What-if only accepts the ruled grammar. The echo is painted before the
+  // scenario changes, then the re-render carries it into the rebuilt box, so the
+  // acknowledgement is seen before the new date. A refusal mutates nothing.
+  applyWhatIf() {
+    const input = document.getElementById('whatif');
+    const text = input?.value ?? '';
+    const parsed = parseIntent(text, this.state.scenario);
+    const paint = (message, ok) => {
+      this.state.lastEcho = message;
+      this.state.lastEchoOk = ok;
+      const echo = document.getElementById('whatif-echo');
+      if (echo) {
+        echo.textContent = message;
+        echo.style.color = ok ? '#747D79' : '#08A68A';
+      }
+    };
+
+    if (!parsed.ok) {
+      paint(parsed.reason, false);
+      return;
+    }
+
+    paint(parsed.echo, true);
+    this.state.appliedIntents ??= [];
+    if (!this.state.intentBase) this.state.intentBase = clone(this.state.scenario);
+    this.state.appliedIntents.push({
+      text,
+      echo: parsed.echo,
+      before: clone(this.state.scenario),
+    });
+    parsed.mutation(this.state.scenario);
+    saveLocal(this.state.scenario);
+    this.render();
+  },
+  // Undo pops the last intent and restores the snapshot taken immediately before
+  // it. The first intent's snapshot is also kept as intentBase for the stack.
+  undoWhatIf() {
+    const intents = this.state.appliedIntents ?? [];
+    const last = intents.pop();
+    if (!last) return;
+    this.state.scenario = clone(last.before);
+    if (intents.length === 0) this.state.intentBase = null;
+    this.state.lastEcho = intents.at(-1)?.echo ?? null;
+    this.state.lastEchoOk = intents.length ? true : null;
+    saveLocal(this.state.scenario);
+    this.render();
+  },
   reset() {
     clearLocal();
     this.state = initialState(this.fixture);

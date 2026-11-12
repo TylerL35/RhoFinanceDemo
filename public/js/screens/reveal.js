@@ -1,6 +1,7 @@
 import { shell, eyebrow } from './common.js';
 import { mountConfirm } from './confirm.js';
 import { mountBar } from './bar.js';
+import { mountWhatIf } from './whatif.js';
 import { range, netBurn, grossSpend, bufferAt } from '../engine.js';
 import { parseDate, fmtMonthDay } from '../calendar.js';
 import { fmt, derived } from '../derived.js';
@@ -160,6 +161,7 @@ export function reveal({ state }) {
     ${math}
     <div id="confirm-slot"></div>
     <div id="bar-slot"></div>
+    <div id="whatif-slot"></div>
     ${sources}`;
   const html = shell({ route: '/reveal', body, footerRight: 'Reveal' });
   // The slots only exist once shell() is in the document, so the mount waits one
@@ -168,8 +170,7 @@ export function reveal({ state }) {
     if (typeof document === 'undefined') return;
     mountConfirm(document.getElementById('confirm-slot'));
     mountBar(document.getElementById('bar-slot'));
+    mountWhatIf(document.getElementById('whatif-slot'), state);
   });
   return html;
 }
-
-// Task 12 adds the what-if box below the bar.
