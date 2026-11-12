@@ -1,6 +1,7 @@
 import { loadFixture, loadLocal, saveLocal, clearLocal } from './scenario.js';
 import * as home from './screens/home.js';
 import * as reveal from './screens/reveal.js';
+import * as bill from './screens/bill.js';
 
 const params = new URLSearchParams(location.search);
 if (params.has('present')) {
@@ -26,7 +27,7 @@ function initialState(fixture) {
 export const app = {
   state: initialState(),
   route: '/',
-  screens: { '/': home.home, '/reveal': reveal.reveal },
+  screens: { '/': home.home, '/reveal': reveal.reveal, '/bill/hubspot': bill.bill },
   go(route) {
     this.route = route;
     if (location.hash === `#${route}`) this.render();
@@ -39,6 +40,20 @@ export const app = {
     if (kind === 'yes') this.state.scenario.payroll.forEach((p) => (p.confirmed = true));
     if (kind === 'one-time') this.state.scenario.payroll = [];
     this.state.confirmations.payroll = kind;
+    saveLocal(this.state.scenario);
+    this.render();
+  },
+  // The only writer of the renewal choice. The scenario carries it because the
+  // engine prices the choice (and the reveal date moves); state.choice is the
+  // screen's record of which button is mint. null reverts. Onboarding can produce
+  // a contract-less scenario, where there is nothing to price.
+  choose(kind) {
+    if (!this.state.scenario?.contracts?.length) {
+      this.render();
+      return;
+    }
+    this.state.choice.hubspot = kind;
+    this.state.scenario.contracts[0].choice = kind;
     saveLocal(this.state.scenario);
     this.render();
   },

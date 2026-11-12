@@ -115,6 +115,14 @@ export function reveal({ state }) {
     ? ''
     : `<p class="muted" style="margin:-16px 0 24px">Start raising by mid-${fullMonth(projected)} ${projected.getUTCFullYear()} (base case ${fmtMonthDay(projected)})</p>`;
 
+  // The choice is already inside the scenario, so the receipt above has moved.
+  // This line is how a reader sees why it moved.
+  const included = { cancel: 'cancel requested', monthly: 'monthly requested', approve: 'renewal approved' };
+  const choice = state.choice?.hubspot;
+  const includesLine = choice && included[choice]
+    ? `<p class="muted" style="margin:-16px 0 24px">Includes: ${contract?.vendor ?? 'HubSpot'} — ${included[choice]}.</p>`
+    : '';
+
   const math = projected === null ? '' : `
     <div class="card white">
       <div class="mono">${fmt(cash)} cash after the renewal ÷ ${fmt(burn)} a month
@@ -148,6 +156,7 @@ export function reveal({ state }) {
     ${headline}
     ${lead}
     ${receipt}
+    ${includesLine}
     ${math}
     <div id="confirm-slot"></div>
     <div id="bar-slot"></div>
