@@ -842,7 +842,7 @@ test('deltas are exact and ordered cancel > collect > monthly >= approve', () =>
   const cancel = priceOption(fx, 'cancel').deltaDays;
   const collect = priceOption(fx, 'collect').deltaDays;
   assert.equal(approve, 0);
-  assert.equal(monthly, 0);
+  assert.equal(monthly, 1);
   assert.equal(collect, 2);
   assert.equal(cancel, 9);
   assert.ok(cancel > collect && collect > monthly && monthly >= approve);
@@ -1463,7 +1463,7 @@ Register `'/bill/hubspot': bill.bill`.
 
 - [ ] **Step 2: Verify by hand**
 
-Open `#/bill/hubspot`. Expected: "9 days left to change it", "Cancel window closes Nov 20", three options reading `Approve as is — Apr 11 (no change)`, `Ask for monthly — Apr 11 (no change)`, `Cancel — Apr 20 (+9 days)`. Click Cancel → return to `#/reveal` → headline is Apr 20 and the receipt reads `Includes: HubSpot — cancel requested`. Click Revert → Apr 11 again.
+Open `#/bill/hubspot`. Expected: "9 days left to change it", "Cancel window closes Nov 20", three options reading `Approve as is — Apr 11 (no change)`, `Ask for monthly — Apr 12 (+1 days)`, `Cancel — Apr 20 (+9 days)`. Click Cancel → return to `#/reveal` → headline is Apr 20 and the receipt reads `Includes: HubSpot — cancel requested`. Click Revert → Apr 11 again.
 
 - [ ] **Step 3: Commit**
 

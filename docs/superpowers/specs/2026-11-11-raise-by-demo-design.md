@@ -283,15 +283,18 @@ starts from that same baseline, so no compounding. The invoice lever is a separa
 | Option | Effect | Date | Delta |
 |---|---|---|---|
 | Approve as is | — | Apr 11 | 0 |
-| Ask for monthly | $60K freed, net burn +$5K/mo | Apr 11 | **0 d** |
+| Ask for monthly | $60K freed, but $5K/mo from Dec 20 | Apr 12 | **+1 d** |
 | Cancel | $60K never leaves | Apr 20 | **+9 d** |
 | Collect overdue (one-off) | $18K lands | Apr 13 | **+2 d** |
 
-**Ask-for-monthly is exactly neutral, and that is arithmetic, not a bug.** With a buffer of
-`c × burn`, the date is approximately `cash / burn − c`. Monthly conversion keeps $60K in cash and
-raises burn by $5K/mo, which raises the buffer by $30K: over a horizon equal to the cushion,
-prepaying and paying monthly are a wash. The deck's `+5 days` assumed a buffer that does not move
-with burn — the same error as §6.3.
+**Ask-for-monthly is nearly neutral: one day.** With a buffer of `c × burn`, the date is
+approximately `cash / burn − c`. Monthly conversion keeps $60K in cash and raises burn by $5K/mo,
+which raises the buffer by $30K, so over a horizon equal to the cushion, prepaying and paying
+monthly very nearly cancel. The monthly charge starts on **Dec 20**, when the in-force annual term
+ends — not on `asOf`, which would be charging for a period the annual already covers. Starting it at
+`asOf` is what makes the answer 0; starting it at renewal is what makes it +1 day, and +1 is the
+model that matches how the contract works. (An earlier draft of this spec claimed 0 days from a
+reference model that started the charge at `asOf`; that was a shortcut, corrected here.)
 
 Keep it in the demo rather than hiding it: **cancelling is the real lever (+9 days), monthly is
 zero**, which is exactly what a founder needs told. The screen's caption already sets this up
@@ -496,7 +499,7 @@ These are the only intended divergences. Everything else in `BUILD_PROMPT.md` is
 | Screen 2 headline | `Start raising by Apr 14, 2027. Estimated range Mar to May.` | `Start raising by mid-April 2027. Estimated range early March to late April.` |
 | Screen 2 receipt | `Start raising by Apr 14, 2027` | `Start raising by mid-April 2027 (base case Apr 11)` — **base case, not midpoint** |
 | Screen 2 bar labels | `Signed 2.3 mo / Not certain yet 0.7 mo` | `Signed 2.4 mo / Not certain yet 0.6 mo` (engine: 2.37 / 0.66; largest-remainder so it sums to 3.0) |
-| Screen 3 options | `Ask for monthly (about +5 days, Apr 19)` | `Ask for monthly — frees $55K now, moves the date 0 days (Apr 11)` |
+| Screen 3 options | `Ask for monthly (about +5 days, Apr 19)` | `Ask for monthly — frees $55K now, about a day (Apr 12)` |
 | Screen 3 options | `Cancel (+10 days, Apr 24)` | `Cancel — about 9 days later (Apr 20)` |
 | Screen 4 button | `Draft 2 reminders, about +3 days` | `Draft 2 reminders (if both pay, about +2 days)` — drafting ≠ collecting |
 
