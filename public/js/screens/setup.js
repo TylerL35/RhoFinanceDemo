@@ -3,21 +3,44 @@ import { validate } from '../scenario.js';
 import { raiseBy } from '../engine.js';
 import { parseDate } from '../calendar.js';
 
+const DEFAULT_AS_OF = '2026-11-11';
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+// A date the engine can actually start from: the exact YYYY-MM-DD shape the
+// field promises, and a day that exists on the calendar (2026-02-30 is not).
+// Anything else is null, so the caller can refuse it instead of projecting it.
+function validAsOf(value) {
+  if (typeof value !== 'string' || !ISO_DAY.test(value)) return null;
+  const d = parseDate(value);
+  // Date rolls 2026-02-30 over to March, so compare the round trip too.
+  if (Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== value) return null;
+  return value;
+}
+
 // Every figure is either a number or NaN; nothing is defaulted into a lie. The
 // as-of date travels with the form so the projection never reads the wall clock.
+// A missing field keeps the form's documented default; a date that is present
+// but unreadable builds no scenario at all, so raiseBy never sees an
+// Invalid Date.
 export function buildScenario(f) {
+  const asOf = f.asOf === '' || f.asOf == null ? DEFAULT_AS_OF : validAsOf(f.asOf);
+  if (asOf === null) return null;
   const cents = (s) => Math.round(Number(s) * 100);
   return {
     id: 'local', source: 'local', label: 'Your numbers',
-    asOf: f.asOf || '2026-11-11',
+    asOf,
     cash: cents(f.cash),
     plan: {
-      raisedOn: f.asOf || '2026-11-11',
+      raisedOn: asOf,
       amount: cents(f.cash),
       plannedGrossSpend: cents(f.spend),
       plannedRevenue: cents(f.revenue),
     },
-    cushionMonths: Number(f.cushion) || 6,
+    // A blank cushion takes the form's default. A typed 0 (or anything else
+    // below 1) is out of range, not a reason to silently use 6: validate()
+    // reports NO_CUSHION and setupOutcome turns that into the missing-field
+    // sentence.
+    cushionMonths: f.cushion === '' || f.cushion == null ? 6 : Number(f.cushion),
     revenue: { current: cents(f.revenue), priceMultiplier: 1, trailing: [] },
     payroll: [], alerts: [],
     contracts: f.vendor ? [{
@@ -77,6 +100,9 @@ function incompleteContract(sc) {
 // horizon. ready is true only when there is a date worth leaving the form for.
 // Computed once so the projection is not run twice per tap on a phone.
 export function setupOutcome(sc) {
+  // buildScenario refuses an unreadable as-of date by returning null; a saved
+  // scenario can still carry a bad one, so check it here before validate/raiseBy.
+  if (!sc || !validAsOf(sc.asOf)) return { note: MISSING, ready: false };
   const errs = validate(sc);
   if (errs.includes('NO_BURN')) return { note: NO_BURN, ready: false };
   if (errs.length || incompleteContract(sc)) return { note: MISSING, ready: false };

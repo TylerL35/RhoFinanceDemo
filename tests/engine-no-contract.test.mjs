@@ -6,11 +6,14 @@ import {
   cashAt, netBurn,
 } from '../public/js/engine.js';
 import { clone } from '../public/js/scenario.js';
-import { buildScenario } from '../public/js/screens/setup.js';
+import { buildScenario, setupOutcome, setupResult, setupReady } from '../public/js/screens/setup.js';
 import { reveal } from '../public/js/screens/reveal.js';
 import { bill } from '../public/js/screens/bill.js';
 import { trust } from '../public/js/screens/trust.js';
 import { claude } from '../public/js/screens/claude.js';
+import { home } from '../public/js/screens/home.js';
+import { invoices } from '../public/js/screens/invoices.js';
+import { alerts } from '../public/js/screens/alerts.js';
 import { mountBar } from '../public/js/screens/bar.js';
 
 const fx = JSON.parse(readFileSync(new URL('../public/data/fixture-seed.json', import.meta.url)));
@@ -125,13 +128,16 @@ test('attribute does not throw without a contract; the signed part is the hires'
 
 const badTokens = ['NaN', 'Invalid Date', '1970', '[object Object]'];
 
-test('reveal, bill, trust and ask render the contract-less company', () => {
-  const state = { scenario: local(), choice: { hubspot: null } };
+test('reveal, bill, trust, ask, home, invoices and alerts render the contract-less company', () => {
+  const state = { scenario: local(), choice: { hubspot: null }, guesses: { made: false, value: null } };
   const screens = {
     reveal: reveal({ state }),
     bill: bill({ state }),
     trust: trust({ state }),
     ask: claude({ state }),
+    home: home({ state }),
+    invoices: invoices({ state }),
+    alerts: alerts({ state }),
   };
   for (const [name, html] of Object.entries(screens)) {
     assert.ok(html.length > 0, `${name} rendered nothing`);
@@ -141,6 +147,44 @@ test('reveal, bill, trust and ask render the contract-less company', () => {
   assert.ok(screens.bill.includes('No contract entered.'));
   assert.ok(screens.trust.includes("Didn't bother you: 0 items"));
   assert.ok(screens.ask.includes('Rho estimates'));
+  assert.ok(screens.home.includes('Raise-by holds at'), 'home carries the company\'s own date');
+  assert.ok(screens.invoices.includes('Sales are'), 'invoices renders its headline');
+  assert.ok(screens.alerts.includes('Nothing unusual right now.'), 'alerts says there is nothing to see');
+});
+
+// ---------------------------------------------------------------------------
+// The as-of date and the cushion are inputs to the projection, not decorations.
+
+test('an as-of date that is not a real YYYY-MM-DD builds no scenario', () => {
+  for (const asOf of ['not a date', '2026-13-01', '2026-02-30', '11/11/2026', '2026-1-1', ' 2026-11-11 ']) {
+    const sc = buildScenario({
+      cash: '900000', revenue: '60000', spend: '90000', cushion: '6',
+      asOf, vendor: '', amount: '', renewsOn: '', noticeDays: '',
+    });
+    assert.equal(sc, null, `asOf ${JSON.stringify(asOf)} must not build a scenario`);
+    assert.deepEqual(setupOutcome(sc), { note: 'Some numbers are missing.', ready: false });
+    assert.equal(setupResult(sc), 'Some numbers are missing.');
+    assert.equal(setupReady(sc), false);
+  }
+});
+
+test('a blank as-of keeps the form default, which is a real date', () => {
+  const sc = buildScenario({
+    cash: '900000', revenue: '60000', spend: '90000', cushion: '6',
+    asOf: '', vendor: '', amount: '', renewsOn: '', noticeDays: '',
+  });
+  assert.equal(sc.asOf, '2026-11-11');
+  assert.ok(!Number.isNaN(raiseBy(sc).getTime()), 'the projection starts from the default date');
+});
+
+test('a typed zero cushion is out of range, not silently six', () => {
+  const sc = buildScenario({
+    cash: '900000', revenue: '60000', spend: '90000', cushion: '0',
+    asOf: '2026-11-11', vendor: '', amount: '', renewsOn: '', noticeDays: '',
+  });
+  assert.equal(sc.cushionMonths, 0, 'a typed zero must not become 6');
+  assert.equal(setupResult(sc), 'Some numbers are missing.');
+  assert.equal(setupReady(sc), false);
 });
 
 test('the bar renders the contract-less company and calls the engine directly', () => {
