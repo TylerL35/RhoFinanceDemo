@@ -106,7 +106,7 @@ test('bill has no catch-all around noticeState, so engine errors surface', async
 
 test('the burn chip is the as-of month net burn per day, not a literal', async () => {
   const { netBurn, parseDate } = await import('../public/js/engine.js');
-  const { shortUsd } = await import('../public/js/money.js');
+  const { usd } = await import('../public/js/money.js');
 
   const asOf = parseDate(fixture.asOf);
   const perDay = netBurn(fixture, asOf.getUTCFullYear(), asOf.getUTCMonth() + 1) / 30.4;
@@ -114,10 +114,16 @@ test('the burn chip is the as-of month net burn per day, not a literal', async (
     perDay >= 610000 && perDay <= 630000,
     `fixture day burn should be $6.1K-$6.3K, got ${perDay / 100}`
   );
+  assert.equal(usd(perDay), '$6,118', 'fixture day burn should print dollars, not thousands');
 
   const copy = text(await render(structuredClone(fixture)));
-  assert.ok(copy.includes(`${shortUsd(perDay)}/day burn`), `burn chip missing: ${copy}`);
-  assert.ok(/\$\d+(\.\d)?K\/day burn/.test(copy), 'burn chip is not a short dollar figure');
+  // Whole dollars, not shortUsd's "$6K": the chip is finer than the literal it
+  // replaced, so it never rounds the day rate away.
+  assert.ok(
+    copy.includes('$6,118/day burn'),
+    `fixture chip must read exactly "$6,118/day burn": ${copy}`
+  );
+  assert.ok(!copy.includes('$6K/day burn'), 'chip fell back to the coarser shortUsd figure');
 
   // Double the burn (gross 763,000 − revenue 391,000 = 372,000/mo vs 186,000)
   // and the chip must move.
@@ -129,13 +135,11 @@ test('the burn chip is the as-of month net burn per day, not a literal', async (
   ) / 30.4;
   const hotterCopy = text(await render(hotter));
   assert.ok(
-    hotterCopy.includes(`${shortUsd(hotterPerDay)}/day burn`),
+    hotterCopy.includes(`${usd(hotterPerDay)}/day burn`),
     `double-burn chip missing: ${hotterCopy}`
   );
-  assert.notEqual(
-    shortUsd(hotterPerDay), shortUsd(perDay),
-    'chip did not change with the burn'
-  );
+  assert.equal(usd(hotterPerDay), '$12,237', 'double burn should print $12,237');
+  assert.ok(hotterCopy.includes('$12,237/day burn'), 'double-burn chip must differ from the fixture');
 });
 
 test('unused chips are gone', async () => {

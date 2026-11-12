@@ -1,7 +1,7 @@
 import { shell, eyebrow } from './common.js';
 import { priceOption, noticeState, raiseBy, netBurn } from '../engine.js';
 import { parseDate, addDays, diffDays, fmtMonthDay } from '../calendar.js';
-import { usd, shortUsd } from '../money.js';
+import { usd } from '../money.js';
 
 // Burn is quoted per calendar month in the engine; a day rate is the as-of
 // month's net burn spread over the average month length (365.25 / 12).
@@ -84,7 +84,7 @@ export function bill({ state }) {
         : 'This one renews automatically.'}</p>
       <div class="mono">${c.source}</div>
       <div class="row" style="margin-top:14px">
-        <span class="mono muted">${shortUsd(burnPerDay)}/day burn</span>
+        <span class="mono muted">${usd(burnPerDay)}/day burn</span>
       </div>
       <div class="row" style="margin-top:18px">${buttons}</div>
       <p class="muted" style="margin-top:14px">Draft opens in your email. You review and send.
