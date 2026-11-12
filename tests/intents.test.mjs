@@ -2,7 +2,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { parseIntent, applyIntent } from '../public/js/intents.js';
-import { priceOption, raiseBy, range } from '../public/js/engine.js';
+import { priceOption, raiseBy, range, netBurn, grossSpend } from '../public/js/engine.js';
+import { parseDate } from '../public/js/calendar.js';
+import { shortUsd } from '../public/js/money.js';
 import { clone } from '../public/js/scenario.js';
 
 const fx = JSON.parse(readFileSync(new URL('../public/data/fixture-seed.json', import.meta.url)));
@@ -106,8 +108,14 @@ test('a price change scales the base case and both band edges', () => {
 
   const sc = clone(fx);
   p.mutation(sc);
-  assert.equal(sc.revenue.priceMultiplier, 1.1);
+  assert.equal(sc.revenue.current, 43010000);
   assert.equal(sc.plan.plannedRevenue, 44000000);
+  assert.equal(sc.revenue.priceMultiplier, 1);
+  assert.equal(
+    (sc.revenue.current * sc.revenue.priceMultiplier)
+      / (fx.revenue.current * (fx.revenue.priceMultiplier ?? 1)),
+    1.1
+  );
 
   const moved = range(sc);
   assert.ok(moved.band.low > baseRange.band.low, 'low band edge did not scale');
@@ -115,6 +123,90 @@ test('a price change scales the base case and both band edges', () => {
   assert.ok(moved.low > baseRange.low, 'low band date did not move with the scaled revenue');
   assert.ok(moved.high > baseRange.high, 'high band date did not move with the scaled revenue');
   assert.ok(moved.base > baseRange.base, 'base date did not move with the price change');
+});
+
+test('one price intent cannot apply its factor twice', () => {
+  const p = parseIntent('raise prices 10%', fx);
+  const sc = clone(fx);
+  p.mutation(sc);
+  const once = clone(sc);
+  p.mutation(sc);
+  assert.deepEqual(sc, once);
+  assert.equal(sc.revenue.current, 43010000);
+});
+
+test('a price change keeps the reveal burn provenance equal to the revenue the burn uses', async () => {
+  const { reveal } = await import('../public/js/screens/reveal.js');
+
+  const p = parseIntent('raise prices 10%', fx);
+  const sc = clone(fx);
+  p.mutation(sc);
+
+  const asOf = parseDate(sc.asOf);
+  const y = asOf.getUTCFullYear();
+  const m = asOf.getUTCMonth() + 1;
+  const burn = netBurn(sc, y, m);
+  const burnRevenue = grossSpend(sc, y, m) - burn;
+
+  // reveal.js prints sc.revenue.current as the burn's provenance revenue, and
+  // netBurn() takes the revenue from the same place after the mutation.
+  assert.equal(burnRevenue, sc.revenue.current);
+  assert.equal(burnRevenue / fx.revenue.current, 1.1);
+  assert.ok(reveal({ state: { scenario: sc, choice: {} } }).includes(shortUsd(burn)));
+});
+
+test('hire counts above the cap are refused and leave the scenario unchanged', () => {
+  for (const text of ['hire 25 more in March', 'hire 999999999 more in March', 'hire 0 more in March']) {
+    const p = parseIntent(text, fx);
+    assert.equal(p.ok, false, `${text} was accepted`);
+    assert.equal(p.reason, 'I can model up to 24 hires in one go.');
+    assert.equal(p.mutation, undefined);
+
+    const out = applyIntent(fx, text);
+    assert.equal(out.ok, false);
+    assert.deepEqual(out.scenario, fx);
+  }
+});
+
+test('price changes outside 1..100 are refused without touching the scenario', () => {
+  for (const text of [
+    'raise prices 0%',
+    'raise prices 101%',
+    `raise prices ${'9'.repeat(30)}%`,
+  ]) {
+    const p = parseIntent(text, fx);
+    assert.equal(p.ok, false);
+    assert.equal(p.reason, 'I can model price changes between 1% and 100%.');
+    assert.equal(p.mutation, undefined);
+    assert.deepEqual(applyIntent(fx, text).scenario, fx);
+  }
+});
+
+test('the other numeric intents enforce their own bounds', () => {
+  const longer = 'I can model up to 24 months longer in one go.';
+  const cushion = 'I can model up to 36 months of cushion.';
+
+  assert.equal(parseIntent('the raise takes 25 months longer', fx).reason, longer);
+  assert.equal(parseIntent('the raise takes 0 months longer', fx).reason, longer);
+  assert.equal(parseIntent('cushion 37 months', fx).reason, cushion);
+  assert.equal(parseIntent('cushion 0 months', fx).reason, cushion);
+
+  // The edges of each range still work.
+  assert.equal(parseIntent('hire 24 more in March', fx).ok, true);
+  assert.equal(parseIntent('the raise takes 24 months longer', fx).ok, true);
+  assert.equal(parseIntent('cushion 36 months', fx).ok, true);
+  assert.equal(parseIntent('raise prices 100%', fx).ok, true);
+});
+
+test('a 400-digit number is refused quickly instead of hanging', () => {
+  const huge = '9'.repeat(400);
+  const started = performance.now();
+  const p = parseIntent(`hire ${huge} more in March`, fx);
+  const elapsed = performance.now() - started;
+
+  assert.equal(p.ok, false);
+  assert.equal(p.reason, 'I can model up to 24 hires in one go.');
+  assert.ok(elapsed < 250, `refusal took ${elapsed}ms`);
 });
 
 test('applyIntent returns a new scenario and never mutates its input', () => {

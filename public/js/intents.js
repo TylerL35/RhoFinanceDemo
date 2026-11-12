@@ -23,6 +23,11 @@ const REFUSE = "I can model hires, contract changes, price changes, and the cush
 
 const refuse = (reason) => ({ ok: false, reason });
 
+// Every numeric capture is bounded before any echo or mutation is built. A
+// four-hundred-digit string becomes Infinity, and a billion hires would push a
+// billion payroll rows, so "finite and inside the ruled range" is checked first.
+const bounded = (n, min, max) => Number.isFinite(n) && n >= min && n <= max;
+
 // The contract may be named by id or by vendor, in any case. The index travels
 // with it so the mutation edits the contract it found, not blindly contracts[0].
 function contractFor(sc, name) {
@@ -47,6 +52,7 @@ export function parseIntent(text, sc) {
   let m = t.match(HIRE);
   if (m) {
     const n = Number(m[1]);
+    if (!bounded(n, 1, 24)) return refuse('I can model up to 24 hires in one go.');
     const token = m[2].slice(0, 3);
     const monthIndex = MONTHS.indexOf(token);
     const year = yearFor(monthIndex, m[3], asOfIso);
@@ -82,6 +88,7 @@ export function parseIntent(text, sc) {
   m = t.match(LONGER);
   if (m) {
     const n = Number(m[1]);
+    if (!bounded(n, 1, 24)) return refuse('I can model up to 24 months longer in one go.');
     return {
       ok: true,
       echo: `I read that as: your raise takes ${n} months longer, so you need ${sc.cushionMonths + n} months of cushion. That moves your date earlier.`,
@@ -98,6 +105,7 @@ export function parseIntent(text, sc) {
   m = t.match(CUSHION);
   if (m) {
     const n = Number(m[1]);
+    if (!bounded(n, 1, 36)) return refuse('I can model up to 36 months of cushion.');
     return {
       ok: true,
       echo: `I read that as: ${n} months of cushion.`,
@@ -107,15 +115,28 @@ export function parseIntent(text, sc) {
 
   m = t.match(PRICES);
   if (m) {
-    const factor = 1 + Number(m[1]) / 100;
+    const pct = Number(m[1]);
+    if (!bounded(pct, 1, 100)) return refuse('I can model price changes between 1% and 100%.');
+    const factor = 1 + pct / 100;
+
+    // The target is captured from the scenario parsed against, not recomputed
+    // from whatever the mutation is handed. Applying this mutation twice in one
+    // intent therefore lands on the same numbers instead of compounding.
+    const effective = Number(sc.revenue.current) * (sc.revenue.priceMultiplier ?? 1);
+    const currentAfter = Math.round(effective * factor);
+    const plannedAfter = Math.round(sc.plan.plannedRevenue * factor);
+
     return {
       ok: true,
       echo: `I read that as: prices ${m[1]}% higher from next month, and on both ends of the range.`,
       mutation: (v) => {
-        // The base case reads revenue.priceMultiplier. The band is computed from
-        // plan.plannedRevenue, so that must scale too or only the middle moves.
-        v.revenue.priceMultiplier = (v.revenue.priceMultiplier ?? 1) * factor;
-        v.plan.plannedRevenue = Math.round(v.plan.plannedRevenue * factor);
+        // netBurn() reads current * priceMultiplier. Scaling both would count the
+        // raise twice, so fold the factor into current once and hold the
+        // multiplier at 1. The band is computed from plan.plannedRevenue, so it
+        // must scale too or only the middle moves.
+        v.revenue.current = currentAfter;
+        v.revenue.priceMultiplier = 1;
+        v.plan.plannedRevenue = plannedAfter;
       },
     };
   }
