@@ -1,7 +1,11 @@
 import { shell, eyebrow } from './common.js';
-import { priceOption, noticeState, raiseBy } from '../engine.js';
+import { priceOption, noticeState, raiseBy, netBurn } from '../engine.js';
 import { parseDate, addDays, diffDays, fmtMonthDay } from '../calendar.js';
-import { usd } from '../money.js';
+import { usd, shortUsd } from '../money.js';
+
+// Burn is quoted per calendar month in the engine; a day rate is the as-of
+// month's net burn spread over the average month length (365.25 / 12).
+const DAYS_PER_MONTH = 30.4;
 
 const LABEL = { approve: 'Approve as is', monthly: 'Ask for monthly', cancel: 'Cancel' };
 
@@ -14,17 +18,15 @@ function deltaPhrase(days) {
   return `(about ${-days} days earlier)`;
 }
 
-// noticeState() keys on the fixture's contract id. Use my numbers writes its
-// contract as id 'main', so the fallback recomputes the same window from the
-// contract's own terms rather than throwing in front of a judge.
+// noticeState() only knows the fixture's 'hubspot' contract; it dereferences
+// undefined for any other id. Use my numbers writes its contract as id 'main',
+// so for every other id compute the same window from that contract's own
+// terms. No catch-all: an engine error on the hubspot path stays visible.
 function windowFor(sc, c) {
-  try {
-    return noticeState(sc);
-  } catch {
-    const deadline = addDays(parseDate(c.renewsOn), -c.noticeDays);
-    const daysLeft = diffDays(parseDate(sc.asOf), deadline);
-    return { deadline, daysLeft, canCancel: daysLeft >= 0 };
-  }
+  if (c.id === 'hubspot') return noticeState(sc);
+  const deadline = addDays(parseDate(c.renewsOn), -c.noticeDays);
+  const daysLeft = diffDays(parseDate(sc.asOf), deadline);
+  return { deadline, daysLeft, canCancel: daysLeft >= 0 };
 }
 
 // The screen prices three options, in this order, off priceOption(). The notice
@@ -49,19 +51,30 @@ export function bill({ state }) {
   const renews = parseDate(c.renewsOn);
   const base = raiseBy(sc);
   const inRaiseBy = base !== null && renews <= base;
+  const asOf = parseDate(sc.asOf);
+  const burnPerDay = netBurn(sc, asOf.getUTCFullYear(), asOf.getUTCMonth() + 1) / DAYS_PER_MONTH;
+
+  // Without a raise-by date there is nothing to compare the renewal to, so the
+  // claim is dropped rather than guessed, and one muted line says why.
+  const raiseByLine = base === null
+    ? `<p class="lead">Auto-renews ${fmtMonthDay(renews)}.</p>
+       <p class="muted" style="margin:0">There is no raise-by date yet for this company.</p>`
+    : `<p class="lead">Auto-renews ${fmtMonthDay(renews)}. ${inRaiseBy ? 'Already in your raise-by date.' : 'Ahead of your raise-by date.'}</p>`;
   const kinds = n.canCancel ? ['approve', 'monthly', 'cancel'] : ['approve', 'monthly'];
   const opts = kinds.map((k) => priceOption(sc, k));
 
+  // priceOption() returns a null date when raiseBy() is null, so the label
+  // falls back to the option name alone instead of "Invalid Date".
   const buttons = opts.map((o) => `
       <button class="btn${chosen === o.kind ? '' : ' ghost'}"
         onclick="app.choose('${o.kind}')">
-        ${LABEL[o.kind]}, ${fmtMonthDay(o.date)} ${deltaPhrase(o.deltaDays)}
+        ${o.date === null ? LABEL[o.kind] : `${LABEL[o.kind]}, ${fmtMonthDay(o.date)} ${deltaPhrase(o.deltaDays)}`}
       </button>`).join(' ');
 
   const body = `
     ${eyebrow('BILL PAY · AWAITING APPROVAL')}
     <h1>${c.vendor}, ${c.term} renewal, ${usd(c.amount)}.</h1>
-    <p class="lead">Auto-renews ${fmtMonthDay(renews)}. ${inRaiseBy ? 'Already in your raise-by date.' : 'Ahead of your raise-by date.'}</p>
+    ${raiseByLine}
     <div class="card white">
       <h2>${n.canCancel
         ? `${n.daysLeft} ${n.daysLeft === 1 ? 'day' : 'days'} left to change it`
@@ -71,9 +84,7 @@ export function bill({ state }) {
         : 'This one renews automatically.'}</p>
       <div class="mono">${c.source}</div>
       <div class="row" style="margin-top:14px">
-        <span class="mono muted">Open order form</span>
-        <span class="mono muted">Last year's charge</span>
-        <span class="mono muted">$6.3K a day burn</span>
+        <span class="mono muted">${shortUsd(burnPerDay)}/day burn</span>
       </div>
       <div class="row" style="margin-top:18px">${buttons}</div>
       <p class="muted" style="margin-top:14px">Draft opens in your email. You review and send.

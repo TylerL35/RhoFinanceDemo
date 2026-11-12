@@ -80,6 +80,92 @@ test('bill reads the notice window for a use-my-numbers contract', async () => {
   assert.ok(copy.includes('Cancel window closes Nov 20.'), 'deadline not derived for id main');
 });
 
+test('bill reads the notice window for whichever contract it shows, not the known id', async () => {
+  // contracts[0] is the contract the screen renders; a 'hubspot' contract still
+  // sits in the array, so a window borrowed from noticeState() would be wrong.
+  const mixed = structuredClone(fixture);
+  mixed.contracts = [
+    {
+      id: 'main', vendor: 'Figma', amount: 2400000, renewsOn: '2026-12-05',
+      noticeDays: 20, term: 'annual', monthlyEquivalent: 200000, choice: null,
+      source: 'Entered by you',
+    },
+    structuredClone(fixture.contracts[0]),
+  ];
+
+  const copy = text(await render(mixed));
+  assert.ok(copy.includes('Figma, annual renewal, $24,000.'), 'local contract header missing');
+  assert.ok(copy.includes('4 days left to change it'), 'window did not follow contracts[0]');
+  assert.ok(copy.includes('Cancel window closes Nov 15.'), 'deadline came from the hubspot contract');
+});
+
+test('bill has no catch-all around noticeState, so engine errors surface', async () => {
+  const src = readFileSync(new URL('../public/js/screens/bill.js', import.meta.url), 'utf8');
+  assert.ok(!/\bcatch\s*\(/.test(src), 'bill.js swallows errors again');
+});
+
+test('the burn chip is the as-of month net burn per day, not a literal', async () => {
+  const { netBurn, parseDate } = await import('../public/js/engine.js');
+  const { shortUsd } = await import('../public/js/money.js');
+
+  const asOf = parseDate(fixture.asOf);
+  const perDay = netBurn(fixture, asOf.getUTCFullYear(), asOf.getUTCMonth() + 1) / 30.4;
+  assert.ok(
+    perDay >= 610000 && perDay <= 630000,
+    `fixture day burn should be $6.1K-$6.3K, got ${perDay / 100}`
+  );
+
+  const copy = text(await render(structuredClone(fixture)));
+  assert.ok(copy.includes(`${shortUsd(perDay)}/day burn`), `burn chip missing: ${copy}`);
+  assert.ok(/\$\d+(\.\d)?K\/day burn/.test(copy), 'burn chip is not a short dollar figure');
+
+  // Double the burn (gross 763,000 − revenue 391,000 = 372,000/mo vs 186,000)
+  // and the chip must move.
+  const hotter = structuredClone(fixture);
+  hotter.plan.plannedGrossSpend = 73600000;
+  const hotterAsOf = parseDate(hotter.asOf);
+  const hotterPerDay = netBurn(
+    hotter, hotterAsOf.getUTCFullYear(), hotterAsOf.getUTCMonth() + 1
+  ) / 30.4;
+  const hotterCopy = text(await render(hotter));
+  assert.ok(
+    hotterCopy.includes(`${shortUsd(hotterPerDay)}/day burn`),
+    `double-burn chip missing: ${hotterCopy}`
+  );
+  assert.notEqual(
+    shortUsd(hotterPerDay), shortUsd(perDay),
+    'chip did not change with the burn'
+  );
+});
+
+test('unused chips are gone', async () => {
+  const copy = text(await render(structuredClone(fixture)));
+  assert.ok(!copy.includes('Open order form'), 'unbacked "Open order form" chip is still there');
+  assert.ok(!copy.includes("Last year's charge"), "unbacked \"Last year's charge\" chip is still there");
+  assert.ok(!copy.includes('$6.3K'), 'hardcoded $6.3K burn is still there');
+});
+
+test('a null raiseBy drops the raise-by claim and says there is no date yet', async () => {
+  const rich = structuredClone(fixture);
+  rich.cash = 200000000000; // $2B: cash never crosses the buffer in the horizon
+
+  const { raiseBy } = await import('../public/js/engine.js');
+  assert.equal(raiseBy(rich), null, 'scenario must have no raise-by date');
+
+  const html = await render(rich);
+  const copy = text(html);
+  assert.ok(!copy.includes('Already in your raise-by date.'), 'stale "already in" sentence');
+  assert.ok(!copy.includes('Ahead of your raise-by date.'), 'stale "ahead of" sentence');
+  assert.ok(
+    copy.includes('There is no raise-by date yet for this company.'),
+    'missing the no-raise-by line'
+  );
+  assert.ok(html.includes('class="muted"'), 'the no-raise-by line is not muted');
+  assert.ok(copy.includes('Auto-renews Dec 20.'), 'renewal date should still print');
+  assert.ok(copy.includes('/day burn'), 'burn chip should still print');
+  assert.ok(!copy.includes('Invalid Date'), 'options rendered an invalid date');
+});
+
 test('bill hides Cancel and says so when the notice window is closed', async () => {
   const late = structuredClone(fixture);
   late.asOf = '2026-11-25';
