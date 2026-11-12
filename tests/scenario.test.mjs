@@ -38,8 +38,34 @@ test('the fixture stores no derived value', () => {
   assert.ok(!('grossSpend' in fixture), 'grossSpend must be derived, never stored');
 });
 
-test('validation rejects a zero-burn company', () => {
+test('a company with no payroll and spend equal to revenue has no burn', () => {
   const c = clone(fixture);
+  c.payroll = [];
   c.plan.plannedGrossSpend = c.revenue.current;
   assert.deepEqual(validate(c), ['NO_BURN']);
+});
+
+test('payroll supplies the burn when planned spend equals revenue', () => {
+  const c = clone(fixture);
+  c.plan.plannedGrossSpend = c.revenue.current;
+  assert.deepEqual(validate(c), []);
+});
+
+test('the fixture numbers are the ones the deck uses', () => {
+  assert.equal(fixture.cash, 210000000);
+  assert.equal(fixture.plan.amount, 270000000);
+  assert.equal(fixture.plan.plannedGrossSpend, 55000000);
+  assert.equal(fixture.plan.plannedRevenue, 40000000);
+  assert.equal(fixture.revenue.current, 39100000);
+  assert.equal(fixture.payroll.length, 3);
+  for (const p of fixture.payroll) assert.equal(p.monthlyCost, 900000);
+  assert.equal(fixture.contracts[0].amount, 6000000);
+  assert.equal(fixture.contracts[0].monthlyEquivalent, 500000);
+  assert.equal(fixture.invoices[0].amount, 1200000);
+  assert.equal(fixture.invoices[1].amount, 600000);
+  assert.equal(fixture.suppression.count, 41);
+  assert.deepEqual(
+    fixture.revenue.trailing.map((m) => m.actual),
+    [40000000, 39200000, 38000000, 36000000],
+  );
 });

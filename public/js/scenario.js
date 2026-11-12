@@ -14,7 +14,8 @@ export function validate(sc) {
   if (!(sc.cash > 0)) errs.push('NO_CASH');
   if (!(sc.plan.plannedGrossSpend >= 0)) errs.push('NO_SPEND');
   if (!(sc.revenue.current > 0)) errs.push('NO_REVENUE');
-  if (sc.plan.plannedGrossSpend - sc.revenue.current <= 0) errs.push('NO_BURN');
+  const payroll = (sc.payroll ?? []).reduce((sum, p) => sum + p.monthlyCost, 0);
+  if (sc.plan.plannedGrossSpend + payroll - sc.revenue.current <= 0) errs.push('NO_BURN');
   if (!(sc.cushionMonths >= 1)) errs.push('NO_CUSHION');
   return errs;
 }
