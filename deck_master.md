@@ -136,7 +136,7 @@ If rehearsal runs long: cut the demo to 1:00, fold slide 7 into 6, shorten slide
 
 ### 8. Demo
 - Setup line (synthetic): a seed SaaS company raised $2.7M in July 2026, planning 18 months. By November it should have 14 months. It has 11.
-- Flow: date moved (guess first, optional) > reveal Apr 14, 2027 (range Mar-May) with the math > "Payroll rose $27K a month. 3 new hires?" confirm > signed vs not certain bar > HubSpot renewal $60K, 9 days left on the cancel window, options priced in days > 2 overdue invoices, drafted reminders > one "not sure" item (a duplicate charge) > Claude answering "when should we raise?" with the same date.
+- Flow: date moved (guess first, optional) > reveal mid-April 2027 (base case Apr 11; range Mar 1 - Apr 28) with the math > "Payroll rose $27K a month. 3 new hires?" confirm > signed vs not certain bar > HubSpot renewal $60K, 9 days left on the cancel window, options priced in days > 2 overdue invoices, drafted reminders > one "not sure" item (a duplicate charge) > Claude answering "when should we raise?" with the same date.
 - End line: Before, she finds out in January from her balance. After, she finds out this week from the bill.
 
 ### 9. Trust
@@ -175,11 +175,11 @@ If rehearsal runs long: cut the demo to 1:00, fold slide 7 into 6, shorten slide
 
 - Raised $2.7M in July 2026. Planned burn $150K a month = 18 months.
 - November 11, 2026 (month 4): cash $2.1M.
-- New: 3 hires +$27K a month (Gusto debits, founder confirms). Sales $9K a month behind plan. HubSpot annual renewal $60K, auto-renews Dec 1, cancel window closes Nov 20.
+- New: 3 hires +$27K a month (Gusto debits, founder confirms). Sales $9K a month behind plan. HubSpot annual renewal $60K, auto-renews Dec 20, cancel window closes Nov 20.
 - Burn now about $186K a month, plus the $60K renewal. ($2.1M - $60K) / $186K = about 11 months.
-- Raise-by = cash-out minus 6 months: was July 2027, now April 14, 2027 (range March to May).
-- Of the 3 months lost: about 2.3 signed (hires and renewal), about 0.7 not certain (sales).
-- Daily burn about $6.3K. Renewal = about 10 days. Monthly billing = about +5 days. Cancel = +10 days. Collecting $18K overdue = about +3 days.
+- Raise-by = cash-out minus 6 months: was July 2027, now Apr 11, 2027 (base case; range Mar 1 - Apr 28).
+- Of the 3 months lost: about 2.4 signed (hires and renewal), about 0.6 not certain (sales).
+- Daily burn about $6.3K. Renewal = about 9 days. Monthly billing = about +1 day. Cancel = about 9 days. Collecting $18K overdue = about +2 days.
 
 ---
 

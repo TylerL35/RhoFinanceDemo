@@ -234,7 +234,7 @@ test('largest remainder makes parts sum to the total (post-confirmation)', () =>
 });
 
 test('largest remainder makes parts sum to the total (pre-confirmation)', () => {
-  assert.deepEqual(displayTenths([0.36, 2.66], 3.02), [4, 26]);
+  assert.deepEqual(displayTenths([0.3614, 2.6612], 3.0226), [4, 26]);
 });
 
 test('largest remainder never loses a tenth', () => {
@@ -842,7 +842,7 @@ test('deltas are exact and ordered cancel > collect > monthly >= approve', () =>
   const cancel = priceOption(fx, 'cancel').deltaDays;
   const collect = priceOption(fx, 'collect').deltaDays;
   assert.equal(approve, 0);
-  assert.equal(monthly, 0);
+  assert.equal(monthly, 1);
   assert.equal(collect, 2);
   assert.equal(cancel, 9);
   assert.ok(cancel > collect && collect > monthly && monthly >= approve);
@@ -859,7 +859,7 @@ test('collect is a one-off and does not change net burn', () => {
 test('options are priced from a scenario with no contract choice', () => {
   const chosen = structuredClone(fx);
   chosen.contracts[0].choice = 'cancel';
-  assert.equal(priceOption(chosen, 'monthly').deltaDays, 0);
+  assert.equal(priceOption(chosen, 'monthly').deltaDays, 1);
 });
 
 test('the notice window has nine days left', () => {
@@ -1109,7 +1109,10 @@ export const app = {
   reset() { clearLocal(); this.state.scenario = structuredClone(this.fixture); this.go('/'); },
   render() {
     const route = this.screens[this.route] ? this.route : '/';
-    document.getElementById('app').innerHTML = this.screens[route]({ state: this.state, route });
+    const out = this.screens[route]({ state: this.state, route });
+    const root = document.getElementById('app');
+    root.innerHTML = typeof out === 'string' ? out : out.html;
+    if (typeof out === 'object' && out.after) out.after();
   },
   async boot() {
     this.fixture = await loadFixture();
@@ -1197,7 +1200,6 @@ export function reveal({ state }) {
     </div>
     <div id="confirm-slot"></div>
     <div id="bar-slot"></div>
-    <div id="whatif-slot"></div>
     <div class="card">
       <h2>Where the numbers come from</h2>
       <table class="mono" style="width:100%;border-collapse:collapse">
@@ -1206,14 +1208,11 @@ export function reveal({ state }) {
         <tr><td style="padding:4px 0">Sales</td><td>$9K a month behind plan</td><td class="muted">12 deposits</td></tr>
       </table>
     </div>`;
-  return { html: shell({ route: '/reveal', body, footerRight: 'Reveal' }), after: mount };
+  const html = shell({ route: '/reveal', body, footerRight: 'Reveal' });
+  return html;
 }
 
-function mount() {
-  import('./bar.js').then((m) => m.mountBar(document.getElementById('bar-slot')));
-  import('./confirm.js').then((m) => m.mountConfirm(document.getElementById('confirm-slot')));
-  import('./whatif.js').then((m) => m.mountWhatIf(document.getElementById('whatif-slot')));
-}
+// Task 9 mounts the confirm card and the bar into their slots; task 12 adds the what-if box.
 ```
 
 - [ ] **Step 2: Verify by hand**
@@ -1234,7 +1233,23 @@ git commit -m "feat: reveal screen with range, math line, and receipts"
 
 **Files:**
 - Create: `public/js/screens/confirm.js`, `public/js/screens/bar.js`
-- Modify: `public/js/app.js` (render must call `after` hooks)
+- Modify: `public/js/screens/reveal.js` (mount the two slots it already renders), `public/js/app.js` (`app.confirmPayroll`)
+
+In `reveal.js`, replace `const html = shell(...)` with a mount call, and add the two imports at the top:
+
+```js
+import { mountConfirm } from './confirm.js';
+import { mountBar } from './bar.js';
+```
+
+```js
+  const html = shell({ route: '/reveal', body, footerRight: 'Reveal' });
+  queueMicrotask(() => {
+    mountConfirm(document.getElementById('confirm-slot'));
+    mountBar(document.getElementById('bar-slot'));
+  });
+  return html;
+```
 
 **Interfaces:**
 - Consumes: `attribute`, `displayTenths`, `raiseBy`.
@@ -1448,7 +1463,7 @@ Register `'/bill/hubspot': bill.bill`.
 
 - [ ] **Step 2: Verify by hand**
 
-Open `#/bill/hubspot`. Expected: "9 days left to change it", "Cancel window closes Nov 20", three options reading `Approve as is — Apr 11 (no change)`, `Ask for monthly — Apr 11 (no change)`, `Cancel — Apr 20 (+9 days)`. Click Cancel → return to `#/reveal` → headline is Apr 20 and the receipt reads `Includes: HubSpot — cancel requested`. Click Revert → Apr 11 again.
+Open `#/bill/hubspot`. Expected: "9 days left to change it", "Cancel window closes Nov 20", three options reading `Approve as is — Apr 11 (no change)`, `Ask for monthly — Apr 12 (+1 days)`, `Cancel — Apr 20 (+9 days)`. Click Cancel → return to `#/reveal` → headline is Apr 20 and the receipt reads `Includes: HubSpot — cancel requested`. Click Revert → Apr 11 again.
 
 - [ ] **Step 3: Commit**
 
@@ -1713,6 +1728,7 @@ import { terms } from './scenario.js';
 import { shortUsdSigned } from './money.js';
 
 const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+const FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 const HIRE = /^hire\s+(\d+)\s+(?:more\s+)?(?:engineers?|people|employees?)?(?:\s+in\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*)?\s*(2027)?$/i;
 const LONGER = /(?:the\s+)?raise\s+takes\s+(\d+)\s+months?\s+longer/i;
@@ -1736,7 +1752,7 @@ export function parseIntent(text, sc) {
     const add = n * cost;
     return {
       ok: true,
-      echo: `I read that as: ${n} more hires starting ${month ? MONTHS[startMonth - 1] : 'Jan'} ${year}, ${shortUsdSigned(add)}/mo.`,
+      echo: `I read that as: ${n} more hires starting ${FULL[startMonth - 1]} ${year}, ${shortUsdSigned(add)}/mo.`,
       mutation: (v) => {
         for (let i = 0; i < n; i += 1) {
           v.payroll.push({ id: `whatif-${v.payroll.length + 1}`, label: `Extra hire ${i + 1}`,
@@ -1895,7 +1911,7 @@ export function buildScenario(f) {
   const cents = (s) => Math.round(Number(s) * 100);
   return {
     id: 'local', source: 'local', label: 'Your numbers',
-    asOf: new Date().toISOString().slice(0, 10),
+    asOf: f.asOf || '2026-11-11',
     cash: cents(f.cash),
     plan: { raisedOn: f.cash, amount: cents(f.cash), plannedGrossSpend: cents(f.spend), plannedRevenue: cents(f.revenue) },
     cushionMonths: Number(f.cushion) || 6,
@@ -1921,7 +1937,8 @@ export function setup({ state }) {
       <div class="row"><label>Cash today<br><input id="f-cash" inputmode="decimal" placeholder="900000"></label>
         <label>Monthly revenue<br><input id="f-revenue" inputmode="decimal" placeholder="60000"></label>
         <label>Monthly spend<br><input id="f-spend" inputmode="decimal" placeholder="90000"></label>
-        <label>Cushion months<br><input id="f-cushion" inputmode="numeric" placeholder="6"></label></div>
+        <label>Cushion months<br><input id="f-cushion" inputmode="numeric" placeholder="6"></label>
+        <label>As of<br><input id="f-asof" placeholder="2026-11-11"></label></div>
       <div class="row" style="margin-top:14px">
         <label>Largest contract<br><input id="f-vendor" placeholder="Figma"></label>
         <label>Amount<br><input id="f-amount" inputmode="decimal" placeholder="12000"></label>
@@ -1950,7 +1967,7 @@ Add to `app.js`:
 saveSetup() {
   const val = (id) => document.getElementById(id).value;
   const sc = buildScenario({ cash: val('f-cash'), revenue: val('f-revenue'), spend: val('f-spend'),
-    cushion: val('f-cushion'), vendor: val('f-vendor'), amount: val('f-amount'),
+    cushion: val('f-cushion'), asOf: val('f-asof'), vendor: val('f-vendor'), amount: val('f-amount'),
     renewsOn: val('f-renew'), noticeDays: val('f-notice') });
   const msg = setupResult(sc);
   document.getElementById('setup-note').textContent = msg;
@@ -2159,7 +2176,7 @@ Then: `python3 -m http.server 8000 --directory public`, open `http://localhost:8
 ```bash
 npx vercel --prod    # or connect the repo in the Vercel dashboard; output dir = public
 ```
-Then generate `qr-demo.svg` + `qr-demo.png` for the final URL, scan it with a phone, and open `#/setup` on that phone.
+Then generate `qr-demo.svg` + `qr-demo.png` for the final URL into `assets/` (NOT `public/` — the precache test in step 1 enumerates every file under `public/` and would fail), scan it with a phone, and open `#/setup` on that phone.
 
 - [ ] **Step 6: Record**
 
