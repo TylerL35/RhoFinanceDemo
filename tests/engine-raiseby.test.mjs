@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { netBurn, raiseBy, range, bufferAt, grossSpend, projectDate, revenueBand } from '../public/js/engine.js';
 import { clone } from '../public/js/scenario.js';
+import { fmt } from '../public/js/derived.js';
 
 const fx = JSON.parse(readFileSync(new URL('../public/data/fixture-seed.json', import.meta.url)));
 const iso = (d) => d.toISOString().slice(0, 10);
@@ -81,6 +82,37 @@ test('project date keeps provenance when there is no crossing', () => {
   assert.equal(pd.value, null);
   assert.ok(pd.inputs.length > 0);
   assert.equal(pd.inputs.find((i) => i.label === 'buffer').value, bufferAt(rich, new Date('2026-11-11T00:00:00Z')));
+});
+
+test('a non-crossing scenario gives a null raise-by and an all-null range', () => {
+  const rich = clone(fx);
+  rich.cash = 1e15;
+  assert.ok(netBurn(rich, 2026, 11) > 0);
+  assert.equal(raiseBy(rich), null);
+  const r = range(rich);
+  assert.equal(r.base, null);
+  assert.equal(r.low, null);
+  assert.equal(r.high, null);
+});
+
+test('a null date formats as an em dash, not the epoch', () => {
+  const rich = clone(fx);
+  rich.cash = 1e15;
+  const out = fmt(projectDate(rich));
+  assert.equal(out, '—');
+  assert.ok(!out.includes('1970'));
+});
+
+test('the fixture still yields all six pinned dates', () => {
+  const cancel = clone(fx);
+  cancel.contracts[0].choice = 'cancel';
+  const cushion = clone(fx);
+  cushion.cushionMonths = 9;
+  const r = range(fx);
+  assert.deepEqual(
+    [iso(raiseBy(fx)), iso(raiseBy(cancel)), iso(raiseBy(cushion)), iso(r.low), iso(r.base), iso(r.high)],
+    ['2027-04-11', '2027-04-20', '2027-01-11', '2027-03-01', '2027-04-11', '2027-04-28'],
+  );
 });
 
 test('a trailing window shorter than two months collapses the range to the base date', () => {

@@ -15,6 +15,10 @@ export function fmt(d) {
     console.warn('[provenance] number without inputs:', d.formula);
     return '—';
   }
+  if (d.value === null || d.value === undefined) {
+    console.warn('[provenance] number is null:', d.formula);
+    return '—';
+  }
   switch (d.unit) {
     case 'cents': return shortUsd(d.value);
     case 'days': return `${Math.round(d.value)} days`;

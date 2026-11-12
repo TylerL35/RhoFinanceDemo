@@ -113,13 +113,15 @@ export function revenueBand(sc) {
 
 export function range(sc) {
   const band = revenueBand(sc);
+  const base = raiseBy(sc);
+  if (base === null) return { low: null, base: null, high: null, band };
   const at = (revenue) => {
     const c = structuredClone(sc);
     c.revenue.current = revenue;
     c.revenue.priceMultiplier = 1;
     return raiseBy(c);
   };
-  return { low: at(band.low), base: raiseBy(sc), high: at(band.high), band };
+  return { low: at(band.low), base, high: at(band.high), band };
 }
 
 export { MONTH_DAYS, diffDays, parseDate, addDays };
