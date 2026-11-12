@@ -91,7 +91,6 @@ The `Scenario` is the only mutable state. Nothing derived is stored.
     "plannedRevenue":    40000000                     // $400K/mo -> planned net burn $150K
   },
   "cushionMonths": 6,
-  "grossSpend": { "current": 55000000 },          // plan base; the 3 hires arrive via payroll[]
   "revenue": {
     "current": 39100000,                              // $391K/mo, $9K behind plan
     "trailing": [
@@ -128,6 +127,8 @@ Rules:
 
 - **Money is integer cents** in the fixture and in `state`. The engine computes in float cents. The
   formatter rounds once, at render.
+- **Nothing derived is stored.** No `grossSpend` field, no cached dates, no cached ranges. A test
+  asserts the fixture has no `grossSpend` key.
 - **`alerts` is a separate top-level key**, so the projection cannot depend on it structurally
   rather than by convention. `project()` reads an allowlisted key set and a test pins the allowlist.
 - **`renewsOn: 2026-12-20`** gives a notice deadline of `2026-11-20` — **exactly 9 days after `asOf`**.
@@ -161,10 +162,16 @@ displayed month figure, so it lives in one place and is asserted in a test.
 
 ### 6.2 Burn and the buffer
 
-**Burn is net of revenue.** `netBurn(month) = grossSpend + payrollActive(month) − revenue(month)`.
-There is no inflow term anywhere. Identity the tests pin:
-`150,000 planned + 27,000 hires + 9,000 revenue gap = 186,000`. Revenue is counted exactly once, as
-a subtraction.
+**Gross spend is derived, never stored.**
+`grossSpend(month) = plan.plannedGrossSpend + payrollActive(month) + anyMonthlyContract(month)`.
+There is **no `grossSpend` field** in the fixture: the plan figure is the base, and hires arrive only
+through `payroll[]`. Two fields holding the same number is how a $27K double count happens, and this
+spec's own rule is that nothing derived is stored.
+
+**Burn is net of revenue.** `netBurn(month) = grossSpend(month) − revenue(month)`. There is no inflow
+term anywhere. Identity the tests pin:
+`150,000 planned + 27,000 hires + 9,000 revenue gap = 186,000`. Revenue is counted exactly once, as a
+subtraction; payroll is counted exactly once, inside `grossSpend`.
 
 **The buffer is the projected burn over the next `cushionMonths` months**, not a single month's burn
 times a number:
@@ -459,7 +466,9 @@ silently moving a number.
    these and would pass a broken engine.
 8. Collecting is a one-off: `cash + 18,000` moves the date +2 days and leaves `netBurn` unchanged.
    Drafting alone moves nothing.
-9. `netBurn(baseline) === 186000`; `150000 + 27000 + 9000 === 186000`; `netBurn === grossSpend − revenue`.
+9. `netBurn(baseline) === 186000`; `150000 + 27000 + 9000 === 186000`; `netBurn === grossSpend − revenue`;
+   and the fixture has **no `grossSpend` key** (`assert.ok(!('grossSpend' in fixture))`), so the value
+   can only ever be derived.
 10. Proration: a hire starting **Jun 16** costs `15/30` of June (a 30-day month, so the expected
     value is exact). A Mar 15 start is 17/31 and is *not* used as a test fixture for that reason.
 11. Notice window: `(renewsOn − noticeDays) − asOf === 9` days for the fixture, and a fixture with a

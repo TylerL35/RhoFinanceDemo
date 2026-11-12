@@ -363,9 +363,13 @@ test('clone is deep', () => {
   assert.equal(fixture.payroll[0].confirmed, false);
 });
 
+test('the fixture stores no derived value', () => {
+  assert.ok(!('grossSpend' in fixture), 'grossSpend must be derived, never stored');
+});
+
 test('validation rejects a zero-burn company', () => {
   const c = clone(fixture);
-  c.grossSpend.current = c.revenue.current;
+  c.plan.plannedGrossSpend = c.revenue.current;
   assert.deepEqual(validate(c), ['NO_BURN']);
 });
 ```
@@ -386,7 +390,6 @@ Expected: FAIL — module not found
   "cash": 210000000,
   "plan": { "raisedOn": "2026-07-01", "amount": 270000000, "plannedGrossSpend": 55000000, "plannedRevenue": 40000000 },
   "cushionMonths": 6,
-  "grossSpend": { "current": 55000000 },
   "revenue": {
     "current": 39100000,
     "priceMultiplier": 1,
@@ -435,9 +438,9 @@ export function clone(sc) { return structuredClone(sc); }
 export function validate(sc) {
   const errs = [];
   if (!(sc.cash > 0)) errs.push('NO_CASH');
-  if (!(sc.grossSpend.current >= 0)) errs.push('NO_SPEND');
+  if (!(sc.plan.plannedGrossSpend >= 0)) errs.push('NO_SPEND');
   if (!(sc.revenue.current > 0)) errs.push('NO_REVENUE');
-  if (sc.grossSpend.current - sc.revenue.current <= 0) errs.push('NO_BURN');
+  if (sc.plan.plannedGrossSpend - sc.revenue.current <= 0) errs.push('NO_BURN');
   if (!(sc.cushionMonths >= 1)) errs.push('NO_CUSHION');
   return errs;
 }
@@ -485,7 +488,7 @@ git commit -m "feat: demo fixture with an open notice window and scenario valida
 
 **Interfaces:**
 - Consumes: `calendar.js`, `derived.js`, `scenario.js`.
-- Produces: `netBurn(sc, y, m) => number` (cents), `cashAt(sc, d) => number`, `bufferAt(sc, d) => number`, `raiseBy(sc) => Date`, `projectDate(sc) => Derived`, `range(sc) => { low: Date, base: Date, high: Date }`, `addMonthsActive(sc)` helpers as needed.
+- Produces: `grossSpend(sc, y, m) => number` (cents), `netBurn(sc, y, m) => number` (cents), `cashAt(sc, d) => number`, `bufferAt(sc, d) => number`, `raiseBy(sc) => Date`, `projectDate(sc) => Derived`, `range(sc) => { low: Date, base: Date, high: Date }`, `revenueBand(sc) => { mean, s, low, high }`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -494,7 +497,7 @@ git commit -m "feat: demo fixture with an open notice window and scenario valida
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { netBurn, raiseBy, range, bufferAt } from '../public/js/engine.js';
+import { netBurn, raiseBy, range, bufferAt, grossSpend } from '../public/js/engine.js';
 import { clone } from '../public/js/scenario.js';
 
 const fx = JSON.parse(readFileSync(new URL('../public/data/fixture-seed.json', import.meta.url)));
@@ -529,9 +532,13 @@ test('a longer raise (cushion 9) moves the date earlier', () => {
 test('a mid-month hire prorates: Jun 16 start costs 15/30 of June', () => {
   const c = clone(fx);
   c.payroll = [{ id: 'h', label: 'h', monthlyCost: 900000, startsOn: '2026-06-16', confirmed: true }];
-  c.grossSpend.current = 55000000;
   assert.equal(netBurn(c, 2026, 6), 55000000 + 450000 - 39100000);
   assert.equal(netBurn(c, 2026, 7), 55000000 + 900000 - 39100000);
+});
+
+test('gross spend is derived from the plan plus payroll, and there is no stored field', () => {
+  assert.equal(grossSpend(fx, 2026, 11), 57700000);
+  assert.ok(!('grossSpend' in fx));
 });
 
 test('the range runs Mar 1 to Apr 28 with a sample deviation', () => {
@@ -580,9 +587,13 @@ function contractMonthly(sc, y, m) {
   return monthIndex >= startIndex ? c.monthlyEquivalent : 0;
 }
 
+export function grossSpend(sc, y, m) {
+  return sc.plan.plannedGrossSpend + payrollFor(sc, y, m) + contractMonthly(sc, y, m);
+}
+
 export function netBurn(sc, y, m) {
   const revenue = sc.revenue.current * (sc.revenue.priceMultiplier ?? 1);
-  return sc.grossSpend.current + payrollFor(sc, y, m) + contractMonthly(sc, y, m) - revenue;
+  return grossSpend(sc, y, m) - revenue;
 }
 
 function oneOffsBetween(sc, from, to) {
@@ -1146,7 +1157,7 @@ git commit -m "feat: app shell, hash router, Rho chrome, home screen"
 ```js
 // public/js/screens/reveal.js
 import { shell, eyebrow } from './common.js';
-import { raiseBy, range, netBurn, bufferAt, revenueBand, projectDate } from '../engine.js';
+import { raiseBy, range, netBurn, grossSpend, bufferAt, revenueBand, projectDate } from '../engine.js';
 import { parseDate, fmtMonthYear, MONTH_DAYS, diffDays } from '../calendar.js';
 import { fmt, derived } from '../derived.js';
 import { shortUsd } from '../money.js';
@@ -1158,9 +1169,9 @@ export function reveal({ state }) {
   const asOf = parseDate(sc.asOf);
   const cash = derived(sc.cash, 'cents', [{ label: 'cash', value: sc.cash, source: 'scenario' }], 'scenario.cash');
   const burn = derived(netBurn(sc, 2026, 11), 'cents',
-    [{ label: 'gross spend', value: sc.grossSpend.current, source: 'scenario' },
+    [{ label: 'gross spend', value: grossSpend(sc, 2026, 11), source: 'engine' },
      { label: 'revenue', value: sc.revenue.current, source: 'scenario' },
-     { label: 'hires', value: 2700000, source: 'payroll' }], 'grossSpend - revenue');
+     { label: 'payroll inside gross', value: 2700000, source: 'payroll' }], 'grossSpend - revenue');
   const buf = derived(bufferAt(sc, asOf), 'cents',
     [{ label: 'cushion', value: sc.cushionMonths, source: 'scenario' },
      { label: 'net burn', value: netBurn(sc, 2026, 11), source: 'engine' }], 'sum of next cushionMonths of netBurn');
@@ -1510,7 +1521,7 @@ export function alerts({ state }) {
 ```js
 // public/js/screens/trust.js
 import { shell, eyebrow } from './common.js';
-import { netBurn } from '../engine.js';
+import { netBurn, grossSpend } from '../engine.js';
 import { usd } from '../money.js';
 import { derived, fmt } from '../derived.js';
 
@@ -1544,7 +1555,7 @@ export function trust({ state }) {
     <div class="card">
       <h2>Today's run rate</h2>
       <p class="mono">net burn ${fmt(derived(netBurn(sc, 2026, 11), 'cents',
-        [{ label: 'gross', value: sc.grossSpend.current, source: 'scenario' },
+        [{ label: 'gross', value: grossSpend(sc, 2026, 11), source: 'engine' },
          { label: 'revenue', value: sc.revenue.current, source: 'scenario' }],
         'grossSpend - revenue'))} a month</p>
     </div>`;
@@ -1888,7 +1899,6 @@ export function buildScenario(f) {
     cash: cents(f.cash),
     plan: { raisedOn: f.cash, amount: cents(f.cash), plannedGrossSpend: cents(f.spend), plannedRevenue: cents(f.revenue) },
     cushionMonths: Number(f.cushion) || 6,
-    grossSpend: { current: cents(f.spend) },
     revenue: { current: cents(f.revenue), priceMultiplier: 1, trailing: [] },
     payroll: [], alerts: [],
     contracts: f.vendor ? [{
@@ -2167,6 +2177,8 @@ git commit -m "feat: offline service worker, keyboard presenter path, deploy not
 ## Self-Review
 
 **Spec coverage.** §1 goal → tasks 7-15. §2 non-goals → global constraints. §3 constraints → task 15 (offline), task 7 (no wall clock test), task 1-6 (zero deps). §5 fixture → task 3. §6.1 clock rules → task 4. §6.2 buffer → task 4. §6.4 attribution and confirmation → tasks 5, 9. §6.5 range and sample deviation → task 4. §6.6 largest remainder → tasks 2, 9. §6.7 options and notice window → task 6, 10. §6.8 invoices draft vs collect → task 11. §7 provenance → task 2, with the three formerly-literal numbers in tasks 11 and 14. §8 surfaces and state → tasks 7-11, `?present` in task 15. §9 grammar → task 12. §10 onboarding → task 13. §11 sandbox → task 14. §12 tests → mapped one per task. §13 deck copy → not code; it is a message to the deck owner and lives in the spec. §14 build order → task order. §15 risks → task 15 (offline), task 7 (determinism).
+
+**Decisions locked so an executor does not undo them.** There is **no `grossSpend` field** in the fixture: `grossSpend()` is a function (task 4) computed from `plan.plannedGrossSpend + payroll + monthly contract`. Task 3 asserts the key is absent. The first draft stored both a `grossSpend.current` and the hires in `payroll[]`, which double counted $27K/mo and moved the date a month early. The what-if grammar in task 12 adds hires to `payroll[]` only and must never touch a stored spend figure. Both the spec (§5, §6.2) and this plan carry that rule.
 
 **Route registration (applies across tasks 8–14).** Each screen task adds one line to `app.js`; the consolidated map after task 14 is exactly this, and no route works until its line exists:
 
