@@ -194,4 +194,4 @@ Business data points (checked Nov 11; sources in scratchpad rho_fit/02_rho_busin
 
 ## 13. Demo scenario (synthetic)
 
-Seed SaaS company, $2.7M raised July 2026, planned $150K a month (18 months). By November: 3 hires (+$27K a month), a $60K annual renewal due Dec 1 with a cancel window closing Nov 20, sales $9K a month behind, $18K in overdue invoices. Cash $2.1M; about $186K a month plus the renewal, so about 11 months. Raise-by moves from July 2027 to April 14, 2027 (range March to May).
+Seed SaaS company, $2.7M raised July 2026, planned $150K a month (18 months). By November: 3 hires (+$27K a month), a $60K annual renewal due Dec 20 with a cancel window closing Nov 20, sales $9K a month behind, $18K in overdue invoices. Cash $2.1M; about $186K a month plus the renewal, so about 11 months. Raise-by moves from July 2027 to April 14, 2027 (range March to May).

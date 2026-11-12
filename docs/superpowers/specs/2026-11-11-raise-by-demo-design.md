@@ -428,7 +428,7 @@ which *inputs* come from Rho. Verified against the live sandbox on Nov 11, 2026:
 |---|---|---|
 | Cash today | `GET /accounts` | 14 accounts, $258,618 checking |
 | Trailing net burn | `GET /insights/cashflow?group=month`, `GET /transactions` | in/out/net buckets, 72 transactions |
-| Committed outflows ("signed") | `GET /scheduled-transactions` | 5 scheduled, $18,950, `next_release_date`, `frequency` |
+| Committed outflows ("signed") | `GET /scheduled-transactions` | 5 scheduled, $18,950.50 (renders $18,951 via `usd`), `next_release_date`, `frequency` |
 | Bills due, counterparties | `GET /ap/bills`, `GET /ap/counterparties` | amount, due_date, counterparty |
 | **Renewal / notice terms** | **not exposed** | — needs contract reading, a Rho extension |
 | Cushion | not a Rho concept | user setting |
@@ -444,7 +444,7 @@ network at runtime.
 
 `#/connect` **derives, it does not display a date.** It runs the same engine functions over the
 snapshot — `cashFromAccounts()`, `netBurnFromCashflow()`, `committedFromScheduled()` — and prints
-*"14 accounts · $258,618 cash · $18,950 committed · trailing net burn $X/mo"*, then the gap list:
+*"14 accounts · $258,618 cash · $18,951 committed"*, then the gap list:
 *"could not derive: cushion, contract terms. That's the part Raise-By adds."* It is labeled
 **"Sandbox data · fetched <fetchedAt>."**
 

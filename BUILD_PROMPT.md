@@ -72,12 +72,12 @@ Put a small gray tag in the bottom-left of slides 2-11 naming the criterion it a
 All screens: white background, Rho sidebar on the left, black text, one mint button per screen, 6px radius, light gray cards (#EFF3F2 fill, #D7E0DE border).
 
 1. Home card, "Your raise-by date moved this week." Optional guess: month chips May / Jun / Jul / Aug 2027, buttons "Reveal" (mint) and "Just show me." Small note: on a normal week the card says "Raise-by holds at Jul 2027. Next check Monday."
-2. Reveal. "Start raising by Apr 14, 2027. Estimated range Mar to May." Math line: "$2.04M cash after the renewal ÷ $186K a month = 11 months. Minus your 6-month cushion = start by Apr 14." Link "Change cushion." Confirm card: "Payroll through Gusto rose $27K a month in Oct. Is that 3 new hires?" buttons "Yes, 3 hires" / "One-time" / "Other." Bar "Why it moved 3 months": Signed 2.3 mo (solid mint) vs Not certain yet 0.7 mo (outline). Rows with source chips: Payroll +$27K a month (6 Gusto debits, confirmed by you); HubSpot renewal $60K on Dec 1 (quoted from order form); Sales $9K a month behind plan (12 deposits).
-3. Bill Pay, awaiting approval. "HubSpot, annual renewal, $60,000. Auto-renews Dec 1. Already in your raise-by date." Highlight: "9 days left to change it (cancel window closes Nov 20)." Quote: Order form p.2: "renews automatically unless notice is given 30 days prior." Chips: Open order form, Last year's charge, $6.3K a day burn. Options with dates: Approve as is (Apr 14), Ask for monthly (about +5 days, Apr 19), Cancel (+10 days, Apr 24). Note: "Draft opens in your email. You review and send. Monthly plans can cost more, so the net shows once they quote."
-4. Invoicing, the open part. "Sales are $9K a month behind your plan." Acme Corp $12,000, 21 days overdue; Brightline $6,000, 14 days overdue. Mint button "Draft 2 reminders, about +3 days." Note: "Collecting moves timing; closing $9K more a month by Feb holds Apr 14."
+2. Reveal. "Start raising by mid-April 2027. Estimated range early March to late April." Math line: "$2.04M cash after the renewal ÷ $186K a month = 11 months. Minus your 6-month cushion = start by Apr 11." Link "Change cushion." Confirm card: "Payroll through Gusto rose $27K a month in Oct. Is that 3 new hires?" buttons "Yes, 3 hires" / "One-time" / "Other." Bar "Why it moved 3 months": Signed 2.4 mo (solid mint) vs Not certain yet 0.6 mo (outline). Rows with source chips: Payroll +$27K a month (6 Gusto debits, confirmed by you); HubSpot renewal $60K on Dec 20 (quoted from order form); Sales $9K a month behind plan (12 deposits).
+3. Bill Pay, awaiting approval. "HubSpot, annual renewal, $60,000. Auto-renews Dec 20. Already in your raise-by date." Highlight: "9 days left to change it (cancel window closes Nov 20)." Quote: Order form p.2: "renews automatically unless notice is given 30 days prior." Chips: Open order form, Last year's charge, $6.3K a day burn. Options with dates: Approve as is (Apr 11), Ask for monthly (about a day, Apr 12), Cancel (about 9 days, Apr 20). Note: "Draft opens in your email. You review and send. Monthly plans can cost more, so the net shows once they quote."
+4. Invoicing, the open part. "Sales are $9K a month behind your plan." Acme Corp $12,000, 21 days overdue; Brightline $6,000, 14 days overdue. Mint button "Draft 2 reminders (if both pay, about 2 days)." Note: "Collecting moves timing; closing $9K more a month by Feb holds Apr 11."
 5. Unusual item: "Not sure, take a look: possible duplicate charge" (same vendor, same amount, 6 days apart) with "Dispute" / "Not a duplicate."
 6. Trust panel. "About three quarters is already signed." "Didn't bother you: 41 items. Rule: we only speak up when something moves your date 7 days or more." "What we can't see: payroll detail beyond Gusto totals, Stripe payouts before they land, accounts outside Rho." "AI reads and explains. Math makes every number. You approve. Rho never moves money." Buttons "This is wrong," "Share read-only with accountant."
-7. Claude, connected to Rho (read-only). User: "When should we start raising?" Answer: "Rho estimates Apr 14, 2027 (range Mar to May), when you'd have 6 months of cash left. It moved 3 months earlier mainly because of 3 new hires and the HubSpot renewal. Sales is the uncertain part." Source chips: Rho raise-by, HubSpot order form p.2, Gusto debits.
+7. Claude, connected to Rho (read-only). User: "When should we start raising?" Answer: "Rho estimates Apr 11, 2027 (range Mar 1 to Apr 28), when you'd have 6 months of cash left. It moved 3 months earlier mainly because of 3 new hires and the HubSpot renewal. Sales is the uncertain part." Source chips: Rho raise-by, HubSpot order form p.2, Gusto debits.
 
 ---
 
@@ -233,7 +233,7 @@ If rehearsal runs long: cut the demo to 1:00, fold slide 7 into 6, shorten slide
 
 ### 8. Demo
 - Setup line (synthetic): a seed SaaS company raised $2.7M in July 2026, planning 18 months. By November it should have 14 months. It has 11.
-- Flow: date moved (guess first, optional) > reveal Apr 14, 2027 (range Mar-May) with the math > "Payroll rose $27K a month. 3 new hires?" confirm > signed vs not certain bar > HubSpot renewal $60K, 9 days left on the cancel window, options priced in days > 2 overdue invoices, drafted reminders > one "not sure" item (a duplicate charge) > Claude answering "when should we raise?" with the same date.
+- Flow: date moved (guess first, optional) > reveal mid-April 2027 (base case Apr 11; range Mar 1 - Apr 28) with the math > "Payroll rose $27K a month. 3 new hires?" confirm > signed vs not certain bar > HubSpot renewal $60K, 9 days left on the cancel window, options priced in days > 2 overdue invoices, drafted reminders > one "not sure" item (a duplicate charge) > Claude answering "when should we raise?" with the same date.
 - End line: Before, she finds out in January from her balance. After, she finds out this week from the bill.
 
 ### 9. Trust
@@ -272,11 +272,11 @@ If rehearsal runs long: cut the demo to 1:00, fold slide 7 into 6, shorten slide
 
 - Raised $2.7M in July 2026. Planned burn $150K a month = 18 months.
 - November 11, 2026 (month 4): cash $2.1M.
-- New: 3 hires +$27K a month (Gusto debits, founder confirms). Sales $9K a month behind plan. HubSpot annual renewal $60K, auto-renews Dec 1, cancel window closes Nov 20.
+- New: 3 hires +$27K a month (Gusto debits, founder confirms). Sales $9K a month behind plan. HubSpot annual renewal $60K, auto-renews Dec 20, cancel window closes Nov 20.
 - Burn now about $186K a month, plus the $60K renewal. ($2.1M - $60K) / $186K = about 11 months.
-- Raise-by = cash-out minus 6 months: was July 2027, now April 14, 2027 (range March to May).
-- Of the 3 months lost: about 2.3 signed (hires and renewal), about 0.7 not certain (sales).
-- Daily burn about $6.3K. Renewal = about 10 days. Monthly billing = about +5 days. Cancel = +10 days. Collecting $18K overdue = about +3 days.
+- Raise-by = cash-out minus 6 months: was July 2027, now Apr 11, 2027 (base case; range Mar 1 - Apr 28).
+- Of the 3 months lost: about 2.4 signed (hires and renewal), about 0.6 not certain (sales).
+- Daily burn about $6.3K. Renewal = about 9 days. Monthly billing = about +1 day. Cancel = about 9 days. Collecting $18K overdue = about +2 days.
 
 ---
 
@@ -503,4 +503,4 @@ Business data points (checked Nov 11; sources in scratchpad rho_fit/02_rho_busin
 
 ## 13. Demo scenario (synthetic)
 
-Seed SaaS company, $2.7M raised July 2026, planned $150K a month (18 months). By November: 3 hires (+$27K a month), a $60K annual renewal due Dec 1 with a cancel window closing Nov 20, sales $9K a month behind, $18K in overdue invoices. Cash $2.1M; about $186K a month plus the renewal, so about 11 months. Raise-by moves from July 2027 to April 14, 2027 (range March to May).
+Seed SaaS company, $2.7M raised July 2026, planned $150K a month (18 months). By November: 3 hires (+$27K a month), a $60K annual renewal due Dec 20 with a cancel window closing Nov 20, sales $9K a month behind, $18K in overdue invoices. Cash $2.1M; about $186K a month plus the renewal, so about 11 months. Raise-by moves from July 2027 to April 14, 2027 (range March to May).
