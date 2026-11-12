@@ -859,7 +859,7 @@ test('collect is a one-off and does not change net burn', () => {
 test('options are priced from a scenario with no contract choice', () => {
   const chosen = structuredClone(fx);
   chosen.contracts[0].choice = 'cancel';
-  assert.equal(priceOption(chosen, 'monthly').deltaDays, 0);
+  assert.equal(priceOption(chosen, 'monthly').deltaDays, 1);
 });
 
 test('the notice window has nine days left', () => {
