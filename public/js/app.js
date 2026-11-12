@@ -1,5 +1,6 @@
 import { loadFixture, loadLocal, saveLocal, clearLocal } from './scenario.js';
 import * as home from './screens/home.js';
+import * as reveal from './screens/reveal.js';
 
 const params = new URLSearchParams(location.search);
 if (params.has('present')) {
@@ -25,7 +26,7 @@ function initialState(fixture) {
 export const app = {
   state: initialState(),
   route: '/',
-  screens: { '/': home.home },
+  screens: { '/': home.home, '/reveal': reveal.reveal },
   go(route) {
     this.route = route;
     if (location.hash === `#${route}`) this.render();
