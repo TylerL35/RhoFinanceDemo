@@ -37,3 +37,36 @@ test('attribution is order-independent', () => {
   const a = attribute(confirmAll(clone(fx)));
   assert.deepEqual(a.segments.map((s) => s.days), [72, 20]);
 });
+
+test('non-crossing scenario returns null attribution, not epoch arithmetic', () => {
+  const sc = clone(fx);
+  sc.revenue.current = 1e12; // never crosses the buffer inside the horizon
+  const a = attribute(sc);
+  assert.equal(a.current, null);
+  assert.equal(a.totalDays, null);
+  assert.equal(a.totalMonths, null);
+  assert.equal(a.segments[0].days, null);
+  assert.equal(a.segments[1].days, null);
+  assert.equal(a.segments[0].months, null);
+  assert.equal(a.segments[1].months, null);
+
+  const numbers = [];
+  const walk = (value) => {
+    if (typeof value === 'number') numbers.push(value);
+    else if (Array.isArray(value)) value.forEach(walk);
+    else if (value && typeof value === 'object' && !(value instanceof Date)) Object.values(value).forEach(walk);
+  };
+  walk(a);
+  assert.ok(
+    numbers.every((n) => !Number.isNaN(n) && Math.abs(n) <= 1000),
+    `unexpected magnitudes: ${numbers}`,
+  );
+});
+
+test('empty payroll is unconfirmed, not vacuously confirmed', () => {
+  const sc = clone(fx);
+  sc.payroll = [];
+  const a = attribute(sc);
+  assert.equal(a.hiresConfirmed, false);
+  assert.ok(Number.isFinite(a.totalDays), `totalDays ${a.totalDays}`);
+});
