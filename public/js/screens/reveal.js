@@ -23,6 +23,12 @@ function periodOf(d) {
   return `${partOf(d)} ${fullMonth(d)}`;
 }
 
+// The headline and receipt name a single date, where standard usage hyphenates
+// only "mid-April"; "early April" and "late April" take no hyphen. periodOf()
+// above stays space-only because it feeds the range sentence, where no part is
+// ever hyphenated.
+const namedDate = (d) => `${partOf(d)}${partOf(d) === 'mid' ? '-' : ' '}${fullMonth(d)}`;
+
 // The engine reads a missing contract as zero (activeContract() in engine.js),
 // so this screen hands it the real scenario, contract-less or not.
 
@@ -103,7 +109,7 @@ export function reveal({ state }) {
     : (rangeSentence ? `<p class="lead">${rangeSentence}</p>` : '');
   const receipt = projected === null
     ? ''
-    : `<p class="muted" style="margin:-16px 0 24px">Start raising by ${partOf(projected)}-${fullMonth(projected)} ${projected.getUTCFullYear()} (base case ${fmtMonthDay(projected)})</p>`;
+    : `<p class="muted" style="margin:-16px 0 24px">Start raising by ${namedDate(projected)} ${projected.getUTCFullYear()} (base case ${fmtMonthDay(projected)})</p>`;
 
   // The choice is already inside the scenario, so the receipt above has moved.
   // This line is how a reader sees why it moved.
@@ -139,7 +145,7 @@ export function reveal({ state }) {
 
   const headline = projected === null
     ? `<h1>Raise-By cannot see a date yet.</h1>`
-    : `<h1>Start raising by ${partOf(projected)}-${fullMonth(projected)} ${projected.getUTCFullYear()}.</h1>`;
+    : `<h1>Start raising by ${namedDate(projected)} ${projected.getUTCFullYear()}.</h1>`;
 
   const body = `
     ${eyebrow('RAISE-BY')}

@@ -77,12 +77,18 @@ test('reveal names the projected month part from the projected day, not a litera
 
   for (const { sc, d, part } of found.values()) {
     const copy = text(await render(sc));
-    const label = `${part}-${fullMonth(d)} ${d.getUTCFullYear()}`;
+    const monthYear = `${fullMonth(d)} ${d.getUTCFullYear()}`;
+    // Standard usage hyphenates only "mid-April"; "early April" and "late April"
+    // take no hyphen. Both spellings are asserted explicitly, so the test cannot
+    // pass by deriving its expectation from the code under test.
+    const label = part === 'mid' ? `mid-${monthYear}` : `${part} ${monthYear}`;
+    const wrong = part === 'mid' ? `mid ${monthYear}` : `${part}-${monthYear}`;
     assert.ok(copy.includes(`Start raising by ${label}.`), `headline is not ${label}: ${copy.slice(0, 200)}`);
     assert.ok(
       copy.includes(`Start raising by ${label} (base case ${fmtMonthDay(d)})`),
       `receipt is not ${label}: ${copy.slice(0, 260)}`
     );
+    assert.ok(!copy.includes(wrong), `headline or receipt used ${wrong} instead of ${label}`);
   }
 });
 
