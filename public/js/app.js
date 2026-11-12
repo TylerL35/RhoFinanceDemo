@@ -2,6 +2,10 @@ import { loadFixture, loadLocal, saveLocal, clearLocal } from './scenario.js';
 import * as home from './screens/home.js';
 import * as reveal from './screens/reveal.js';
 import * as bill from './screens/bill.js';
+import * as invoices from './screens/invoices.js';
+import * as alerts from './screens/alerts.js';
+import * as trust from './screens/trust.js';
+import * as claude from './screens/claude.js';
 
 const params = new URLSearchParams(location.search);
 if (params.has('present')) {
@@ -27,7 +31,15 @@ function initialState(fixture) {
 export const app = {
   state: initialState(),
   route: '/',
-  screens: { '/': home.home, '/reveal': reveal.reveal, '/bill/hubspot': bill.bill },
+  screens: {
+    '/': home.home,
+    '/reveal': reveal.reveal,
+    '/bill/hubspot': bill.bill,
+    '/invoices': invoices.invoices,
+    '/alerts/duplicate': alerts.alerts,
+    '/trust': trust.trust,
+    '/claude': claude.claude,
+  },
   go(route) {
     this.route = route;
     if (location.hash === `#${route}`) this.render();
@@ -57,6 +69,30 @@ export const app = {
     saveLocal(this.state.scenario);
     this.render();
   },
+  // Drafting reminders is not collecting: drafted rows are recorded and saved,
+  // but only collected invoices feed the projection.
+  draftInvoices() {
+    const list = this.state.scenario?.invoices ?? [];
+    list.forEach((i) => (i.drafted = true));
+    this.state.collections.drafted = true;
+    saveLocal(this.state.scenario);
+    this.render();
+  },
+  collectInvoice(id) {
+    const list = this.state.scenario?.invoices ?? [];
+    const inv = list.find((i) => i.id === id);
+    if (!inv) {
+      this.render();
+      return;
+    }
+    inv.collected = true;
+    this.state.collections.collected[list.indexOf(inv)] = true;
+    saveLocal(this.state.scenario);
+    this.render();
+  },
+  // The alert outcome is screen state only; it is never written to the scenario
+  // and never reaches the engine.
+  resolveAlert(kind) { this.state.alerts.duplicate = kind; this.render(); },
   reset() {
     clearLocal();
     this.state = initialState(this.fixture);
