@@ -19,6 +19,7 @@ export function fmt(d) {
     case 'cents': return shortUsd(d.value);
     case 'days': return `${Math.round(d.value)} days`;
     case 'months': return `${(Math.round(d.value * 10) / 10).toFixed(1)} mo`;
+    case 'date': return new Date(d.value).toISOString().slice(0, 10);
     case 'count': return String(Math.round(d.value));
     default: return String(d.value);
   }
