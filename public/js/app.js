@@ -7,6 +7,7 @@ import * as invoices from './screens/invoices.js';
 import * as alerts from './screens/alerts.js';
 import * as trust from './screens/trust.js';
 import * as claude from './screens/claude.js';
+import * as setup from './screens/setup.js';
 
 const params = new URLSearchParams(location.search);
 if (params.has('present')) {
@@ -46,6 +47,7 @@ export const app = {
     '/alerts/duplicate': alerts.alerts,
     '/trust': trust.trust,
     '/claude': claude.claude,
+    '/setup': setup.setup,
   },
   go(route) {
     this.route = route;
@@ -53,6 +55,43 @@ export const app = {
     else location.hash = `#${route}`; // the hashchange listener performs the single render
   },
   guess(value) { this.state.guesses = { made: true, value }; this.render(); },
+  // Onboarding builds the scenario from the form alone (no fixture history, no
+  // wall clock), says what it found under the button, and only leaves the form
+  // when there is a date to show. A new scenario resets the screen state that
+  // described the old one, so no confirmed hire or renewal choice leaks across.
+  saveSetup(form = null) {
+    const val = (id) => document.getElementById(id)?.value ?? '';
+    const get = (key, id) => (form && form[key] !== undefined ? form[key] : val(id));
+    const sc = setup.buildScenario({
+      cash: get('cash', 'f-cash'),
+      revenue: get('revenue', 'f-revenue'),
+      spend: get('spend', 'f-spend'),
+      cushion: get('cushion', 'f-cushion'),
+      asOf: get('asOf', 'f-asof'),
+      vendor: get('vendor', 'f-vendor'),
+      amount: get('amount', 'f-amount'),
+      renewsOn: get('renewsOn', 'f-renew'),
+      noticeDays: get('noticeDays', 'f-notice'),
+    });
+    const note = document.getElementById('setup-note');
+    const { note: message, ready } = setup.setupOutcome(sc);
+    if (note) note.textContent = message;
+    if (!ready) return;
+    this.state.scenario = sc;
+    this.state.confirmations = { payroll: null };
+    this.state.choice = { hubspot: null };
+    this.state.collections = { drafted: false, collected: [false, false] };
+    this.state.alerts = { duplicate: null };
+    this.state.guesses = { made: false, value: null };
+    // The what-if stack snapshots the old scenario, so carrying it over would
+    // let Undo swap the judge's own numbers back for the fixture.
+    this.state.appliedIntents = [];
+    this.state.intentBase = null;
+    this.state.lastEcho = null;
+    this.state.lastEchoOk = null;
+    saveLocal(sc);
+    this.go('/reveal');
+  },
   // The only writer of payroll[].confirmed. Confirming never moves the date; the
   // bar re-derives, and only "one-time" (which drops the payroll rows) moves it.
   confirmPayroll(kind) {

@@ -9,8 +9,17 @@ export function mountConfirm(el) {
   const sc = state?.scenario;
   const kind = state?.confirmations?.payroll ?? null;
   const payroll = sc?.payroll ?? [];
+
+  // Onboarding builds a company with no payroll rows. There is nothing to
+  // confirm, and the fixture's Gusto question would be invented data on the
+  // judge's own numbers, so the slot stays empty.
+  if (payroll.length === 0) {
+    el.innerHTML = '';
+    return;
+  }
+
   const confirmed = kind === 'yes'
-    || (payroll.length > 0 && payroll.every((p) => p.confirmed));
+    || payroll.every((p) => p.confirmed);
 
   if (confirmed) {
     // The scenario holds no debit records, so the count is never stated.

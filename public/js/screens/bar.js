@@ -7,11 +7,25 @@ const tenths = (t) => `${Math.trunc(t / 10)}.${t % 10}`;
 
 const appState = () => (globalThis.app ?? globalThis.window?.app)?.state;
 
+// The engine assumes a contract exists (contracts[0] in contractMonthly and
+// oneOffsBetween). Onboarding can produce a contract-less scenario, so the
+// attribution gets the same zero-value stand-in that reveal.js and trust.js use.
+function calculable(sc) {
+  if (sc.contracts?.length) return sc;
+  return {
+    ...sc,
+    contracts: [{
+      id: 'none', vendor: '', amount: 0, renewsOn: sc.asOf, noticeDays: 0,
+      term: 'none', monthlyEquivalent: 0, choice: 'cancel', source: '',
+    }],
+  };
+}
+
 export function mountBar(el) {
   if (!el) return;
 
   const sc = appState()?.scenario;
-  const a = sc ? attribute(sc) : null;
+  const a = sc ? attribute(calculable(sc)) : null;
   const parts = a ? a.segments.map((x) => x.months) : [];
 
   // No crossing means no attribution: say so, print no graphic, and never let a
