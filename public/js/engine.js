@@ -23,9 +23,7 @@ export function payrollFor(sc, y, m) {
 function contractMonthly(sc, y, m) {
   const c = sc.contracts[0];
   if (c.choice !== 'monthly') return 0;
-  // Choosing monthly replaces the annual renewal with monthly billing from the
-  // as-of month, so the freed renewal and the new fees sit on the same clock.
-  const start = parseDate(sc.asOf);
+  const start = parseDate(c.renewsOn);
   const monthIndex = y * 12 + (m - 1);
   const startIndex = start.getUTCFullYear() * 12 + start.getUTCMonth();
   return monthIndex >= startIndex ? c.monthlyEquivalent : 0;
@@ -192,6 +190,7 @@ export function priceOption(sc, kind) {
   if (kind === 'collect') v.invoices.forEach((inv) => (inv.collected = true));
 
   const date = kind === 'approve' ? baseline : raiseBy(v);
+  if (baseline === null || date === null) return { kind, date: null, deltaDays: null };
   return { kind, date, deltaDays: diffDays(baseline, date) };
 }
 
