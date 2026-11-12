@@ -18,7 +18,7 @@ export function fmt(d) {
   switch (d.unit) {
     case 'cents': return shortUsd(d.value);
     case 'days': return `${Math.round(d.value)} days`;
-    case 'months': return `${d.value.toFixed(1)} mo`;
+    case 'months': return `${(Math.round(d.value * 10) / 10).toFixed(1)} mo`;
     case 'count': return String(Math.round(d.value));
     default: return String(d.value);
   }
@@ -37,6 +37,17 @@ export function displayTenths(parts, totalMonths) {
     out[order[k % order.length].i] += 1;
     remaining -= 1;
     k += 1;
+  }
+  const takeOrder = raw
+    .map((v, i) => ({ i, frac: v - Math.floor(v), v }))
+    .sort((a, b) => a.frac - b.frac || a.v - b.v);
+  while (remaining < 0) {
+    if (!out.some((v) => v > 0)) break;
+    const i = takeOrder[k % takeOrder.length].i;
+    k += 1;
+    if (out[i] <= 0) continue;
+    out[i] -= 1;
+    remaining += 1;
   }
   return out;
 }

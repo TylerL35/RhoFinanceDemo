@@ -26,3 +26,21 @@ test('largest remainder never loses a tenth', () => {
     assert.equal(sum, Math.round(total * 10));
   }
 });
+
+test('displayTenths keeps the sum exact when parts exceed the total', () => {
+  const t = displayTenths([2.0, 2.0], 3.0);
+  assert.equal(t.reduce((a, b) => a + b, 0), 30);
+  assert.deepEqual(t, [15, 15]);
+  assert.deepEqual(displayTenths([2.0, 2.0], 3.0), t);
+});
+
+test('fmt months rounds exactly like displayTenths', () => {
+  for (const v of [0.6571, 2.3656, 3.0226, 3.05]) {
+    const d = derived(v, 'months', [{ label: 'x', value: 1, source: 't' }], 't');
+    assert.equal(
+      Math.round(parseFloat(fmt(d)) * 10) / 10,
+      Math.round(v * 10) / 10,
+      `value ${v}: fmt => ${fmt(d)}`,
+    );
+  }
+});
