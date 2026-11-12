@@ -124,4 +124,39 @@ export function range(sc) {
   return { low: at(band.low), base, high: at(band.high), band };
 }
 
+function variantRemoving(sc, { signed, notCertain }) {
+  const v = structuredClone(sc);
+  const hiresInSigned = v.payroll.every((p) => p.confirmed);
+  if (signed) {
+    v.contracts[0].choice = 'cancel';
+    if (hiresInSigned) v.payroll = [];
+  }
+  if (notCertain) {
+    v.revenue.current = v.plan.plannedRevenue;
+    if (!hiresInSigned) v.payroll = [];
+  }
+  return v;
+}
+
+export function attribute(sc) {
+  const hiresConfirmed = sc.payroll.length > 0 && sc.payroll.every((p) => p.confirmed);
+  const current = raiseBy(sc);
+  const signedOnly = raiseBy(variantRemoving(sc, { signed: true, notCertain: false }));
+  const uncertainOnly = raiseBy(variantRemoving(sc, { signed: false, notCertain: true }));
+  const anchor = raiseBy(variantRemoving(sc, { signed: true, notCertain: true }));
+
+  const signedDays = ((signedOnly - current) / 86400000 + (anchor - uncertainOnly) / 86400000) / 2;
+  const uncertainDays = ((uncertainOnly - current) / 86400000 + (anchor - signedOnly) / 86400000) / 2;
+  const totalDays = (anchor - current) / 86400000;
+
+  return {
+    anchor, current, totalDays, hiresConfirmed,
+    segments: [
+      { id: 'signed', days: signedDays, months: signedDays / MONTH_DAYS },
+      { id: 'notCertain', days: uncertainDays, months: uncertainDays / MONTH_DAYS },
+    ],
+    totalMonths: totalDays / MONTH_DAYS,
+  };
+}
+
 export { MONTH_DAYS, diffDays, parseDate, addDays };
