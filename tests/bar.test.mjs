@@ -92,6 +92,35 @@ test('confirm card asks the question verbatim and offers one mint button', () =>
   assert.equal((html.match(/class="btn"/g) ?? []).length, 1, 'exactly one mint button');
 });
 
+test('confirm card derives the amount, month, and hire count from the scenario payroll', () => {
+  const custom = clone(fx);
+  custom.payroll = [
+    { id: 'a', label: 'Design hire', monthlyCost: 1250000, startsOn: '2026-09-01', confirmed: false },
+    { id: 'b', label: 'Design hire 2', monthlyCost: 1250000, startsOn: '2026-09-01', confirmed: false },
+  ];
+
+  const html = mount(mountConfirm, custom);
+  assert.ok(
+    html.includes('Payroll through Gusto rose $25K a month in Sep. Is that 2 new hires?'),
+    `question is not the custom payroll: ${html}`
+  );
+  assert.ok(html.includes('Yes, 2 hires'), 'mint button still repeats the fixture hire count');
+  assert.ok(!html.includes('$27K'), 'the fixture amount is still literal');
+  assert.ok(!html.includes('3 new hires'), 'the fixture hire count is still literal');
+
+  const confirmed = mount(mountConfirm, custom, 'yes');
+  assert.ok(
+    confirmed.includes('Payroll confirmed by you: $25K a month, from Gusto debits.'),
+    `confirmed line is not the custom payroll: ${confirmed}`
+  );
+});
+
+test('confirm card stays empty when the scenario has no payroll rows', () => {
+  const bare = clone(fx);
+  bare.payroll = [];
+  assert.equal(mount(mountConfirm, bare), '', 'a payroll-less company was asked the fixture question');
+});
+
 test('confirmed card replaces the question without inventing a debit count', () => {
   const html = mount(mountConfirm, confirmedFixture(), 'yes');
   assert.ok(html.includes('Payroll confirmed by you: $27K a month, from Gusto debits.'));

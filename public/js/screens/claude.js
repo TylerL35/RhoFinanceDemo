@@ -24,6 +24,8 @@ export function claude({ state }) {
   const r = range(sc);
   const a = attribute(sc);
   const parts = a.segments.map((x) => x.months);
+  const contract = activeContract(sc);
+  const hasPayroll = (sc.payroll?.length ?? 0) > 0;
 
   // A company whose cash never crosses has no date, no band and no segments.
   // Ruling 6: one plain sentence, and no null or epoch leaks into the copy.
@@ -38,7 +40,7 @@ export function claude({ state }) {
   } else {
     const [, uncertain] = displayTenths(parts, a.totalMonths);
     const hires = sc.payroll.length;
-    const vendor = activeContract(sc)?.vendor ?? null;
+    const vendor = contract?.vendor ?? null;
     const reasons = [];
     if (hires > 0) reasons.push(`${hires} new hire${hires === 1 ? '' : 's'}`);
     if (vendor) reasons.push(`the ${vendor} renewal`);
@@ -59,8 +61,8 @@ export function claude({ state }) {
       ${answer}
       <div class="row">
         <span class="mono muted">Rho raise-by</span>
-        <span class="mono muted">HubSpot order form p.2</span>
-        <span class="mono muted">Gusto debits</span>
+        ${contract ? `<span class="mono muted">${contract.vendor} order form p.2</span>` : ''}
+        ${hasPayroll ? `<span class="mono muted">Gusto debits</span>` : ''}
       </div>
     </div>
     <div class="row">

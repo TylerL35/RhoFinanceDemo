@@ -12,6 +12,9 @@ export function deriveFromSnapshot(snapshot) {
   const cash = snapshot.accounts
     .filter((a) => a.account_type === 'checking')
     .reduce((sum, a) => sum + a.balance.amount, 0);
+  // Derived, not typed: the sandbox payload's five scheduled amounts sum to
+  // 1,895,050 cents, and usd() rounds half up to print $18,951 (the spec prose
+  // says $18,950; the snapshot is the source of truth).
   const committed = snapshot.scheduled_transactions.reduce((sum, t) => sum + t.amount.amount, 0);
   const gaps = ['cushion', 'contract terms'];
   return {

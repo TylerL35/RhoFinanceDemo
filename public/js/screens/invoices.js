@@ -26,6 +26,10 @@ export function invoices({ state }) {
   const asOf = parseDate(sc.asOf);
   const behind = shortUsd(shortfall(sc));
   const count = sc.invoices.length;
+  // Drafting is a one-way action on this screen: once every row is drafted, the
+  // live mint button would do nothing on a second click, so it becomes a
+  // disabled, non-mint receipt of what already happened.
+  const allDrafted = count > 0 && sc.invoices.every((i) => i.drafted);
 
   const rows = sc.invoices.map((i) => {
     // Collected wins over drafted: it is the later, cash-moving fact.
@@ -51,7 +55,9 @@ export function invoices({ state }) {
     <h1>Sales are ${behind} a month behind your plan.</h1>
     <table class="mono" style="width:100%;border-collapse:collapse">${rows}</table>
     <div class="row" style="margin-top:18px">
-      <button class="btn" onclick="app.draftInvoices()">Draft ${count} reminder${count === 1 ? '' : 's'}</button>
+      ${allDrafted
+        ? `<button class="btn ghost" disabled>Reminders drafted</button>`
+        : `<button class="btn" onclick="app.draftInvoices()">Draft ${count} reminder${count === 1 ? '' : 's'}</button>`}
       <span class="muted">${caption}</span>
     </div>
     <p class="muted" style="margin-top:14px">Collecting moves timing. Closing ${behind} a month more by Feb

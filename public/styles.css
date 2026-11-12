@@ -22,6 +22,7 @@ h2 { font-size: 20px; font-weight: 500; margin: 0 0 8px; }
 .card.white { background: var(--moon); }
 .btn { background: var(--mint); color: var(--abyss); border: 0; border-radius: var(--r); padding: 10px 16px; font: inherit; font-weight: 500; cursor: pointer; }
 .btn.ghost { background: transparent; border: 1px solid var(--border); }
+.btn:disabled { cursor: default; opacity: 0.55; }
 .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 /* Onboarding: labels above their inputs, 16px text so iOS does not zoom, and a
    single column once the card is narrower than two 180px fields. */

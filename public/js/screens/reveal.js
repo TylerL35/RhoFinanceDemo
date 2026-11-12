@@ -12,13 +12,15 @@ const at = (label, value, source) => ({ label, value, source });
 
 const fullMonth = (d) => d.toLocaleString('en-US', { month: 'long', timeZone: 'UTC' });
 
-// The deck names a range endpoint by the part of the month it lands in:
+// The deck names a date by the part of the month it lands in:
 // early 1-10, mid 11-20, late 21-end. Fixture: 2027-03-01 -> early March,
-// 2027-04-28 -> late April.
+// 2027-04-11 -> mid April, 2027-04-28 -> late April. The headline and receipt
+// use the same derivation on the projected date, so a judge's own landing day
+// is named honestly.
+const partOf = (d) => (d.getUTCDate() <= 10 ? 'early' : d.getUTCDate() <= 20 ? 'mid' : 'late');
+
 function periodOf(d) {
-  const day = d.getUTCDate();
-  const part = day <= 10 ? 'early' : day <= 20 ? 'mid' : 'late';
-  return `${part} ${fullMonth(d)}`;
+  return `${partOf(d)} ${fullMonth(d)}`;
 }
 
 // The engine reads a missing contract as zero (activeContract() in engine.js),
@@ -101,7 +103,7 @@ export function reveal({ state }) {
     : (rangeSentence ? `<p class="lead">${rangeSentence}</p>` : '');
   const receipt = projected === null
     ? ''
-    : `<p class="muted" style="margin:-16px 0 24px">Start raising by mid-${fullMonth(projected)} ${projected.getUTCFullYear()} (base case ${fmtMonthDay(projected)})</p>`;
+    : `<p class="muted" style="margin:-16px 0 24px">Start raising by ${partOf(projected)}-${fullMonth(projected)} ${projected.getUTCFullYear()} (base case ${fmtMonthDay(projected)})</p>`;
 
   // The choice is already inside the scenario, so the receipt above has moved.
   // This line is how a reader sees why it moved.
@@ -137,7 +139,7 @@ export function reveal({ state }) {
 
   const headline = projected === null
     ? `<h1>Raise-By cannot see a date yet.</h1>`
-    : `<h1>Start raising by mid-${fullMonth(projected)} ${projected.getUTCFullYear()}.</h1>`;
+    : `<h1>Start raising by ${partOf(projected)}-${fullMonth(projected)} ${projected.getUTCFullYear()}.</h1>`;
 
   const body = `
     ${eyebrow('RAISE-BY')}

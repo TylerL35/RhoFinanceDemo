@@ -68,6 +68,26 @@ test('the overdue days and the shortfall headline are read from the scenario', (
   assert.ok(copy.includes('Closing $12K a month more by Feb holds the date.'), 'closing shortfall is not derived');
 });
 
+test('a drafted invoice list turns the draft action into a disabled, non-mint control', () => {
+  const drafted = clone(fixture);
+  drafted.invoices.forEach((i) => (i.drafted = true));
+  const html = renderInvoices(drafted);
+  const copy = text(html);
+
+  assert.ok(copy.includes('Reminders drafted'), 'drafted control copy missing');
+  assert.ok(!copy.includes('Draft 2 reminders'), 'the live draft button survived drafting');
+
+  const control = html.match(/<button[^>]*>Reminders drafted<\/button>/)?.[0];
+  assert.ok(control, 'no control carries the drafted label');
+  assert.ok(control.includes('disabled'), `drafted control is still clickable: ${control}`);
+  assert.ok(/class="btn[^"]*ghost/.test(control), `drafted control is still mint: ${control}`);
+  assert.equal(mintCount(html), 0, 'a drafted list still shows a mint button');
+  assert.ok(!html.includes('app.draftInvoices()'), 'a drafted list still calls the draft action');
+
+  assert.equal((copy.match(/reminder drafted/g) ?? []).length, 2, 'drafted rows do not say so');
+  assert.ok(copy.includes('Mark collected'), 'collecting is still offered after drafting');
+});
+
 test('drafting leaves raiseBy alone; collecting moves it', () => {
   const base = raiseBy(clone(fixture));
 
@@ -173,7 +193,10 @@ test('alerts follows the scenario when the vendor, amount, or dates change', () 
 
 test('a resolved alert replaces both buttons with the saved verdict', () => {
   const disputed = renderAlerts(clone(fixture), 'disputed');
-  assert.ok(text(disputed).includes('Disputed. Logged to the trust panel.'));
+  const verdict = disputed.match(/<div class="card"><p class="mono"[^>]*>(.*?)<\/p><\/div>/)?.[1];
+  assert.equal(verdict, 'Disputed.', 'the dispute verdict must claim nothing beyond the ruling');
+  assert.ok(text(disputed).includes('Disputed.'));
+  assert.ok(!text(disputed).includes('trust panel'), 'the dispute claims a trust-panel record that is never written');
   assert.equal(mintCount(disputed), 0, 'a resolved alert still has a mint button');
   assert.ok(!disputed.includes('app.resolveAlert('), 'a resolved alert still offers buttons');
 
@@ -274,6 +297,32 @@ test('claude answers with the raiseBy date, range words, and attribute months', 
   for (const chip of ['When should we start raising?', 'What changed this week?', "What's still uncertain?"]) {
     assert.ok(copy.includes(chip), `question chip missing: ${chip}`);
   }
+});
+
+test('claude names only the sources the scenario actually carries', () => {
+  const bare = clone(fixture);
+  bare.contracts = [];
+  bare.payroll = [];
+  const bareCopy = text(renderClaude(bare));
+  assert.ok(bareCopy.includes('Rho raise-by'), 'the Rho chip must always stay');
+  assert.ok(!bareCopy.includes('order form'), 'invented a contract source for a contract-less company');
+  assert.ok(!bareCopy.includes('Gusto debits'), 'invented a payroll source for a payroll-less company');
+
+  const noContract = clone(fixture);
+  noContract.contracts = [];
+  const noContractCopy = text(renderClaude(noContract));
+  assert.ok(!noContractCopy.includes('order form'), 'contract chip without a contract');
+  assert.ok(noContractCopy.includes('Gusto debits'), 'payroll chip should survive a missing contract');
+
+  const noPayroll = clone(fixture);
+  noPayroll.payroll = [];
+  const noPayrollCopy = text(renderClaude(noPayroll));
+  assert.ok(noPayrollCopy.includes('HubSpot order form p.2'), 'contract chip should survive missing payroll');
+  assert.ok(!noPayrollCopy.includes('Gusto debits'), 'payroll chip without payroll');
+
+  const fixtureCopy = text(renderClaude(clone(fixture)));
+  assert.ok(fixtureCopy.includes('HubSpot order form p.2'), 'fixture contract chip changed');
+  assert.ok(fixtureCopy.includes('Gusto debits'), 'fixture payroll chip changed');
 });
 
 test('claude reads the confirmed scenario, where sales is the uncertain part', () => {

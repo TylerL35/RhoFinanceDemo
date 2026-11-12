@@ -28,7 +28,7 @@ export function alerts({ state }) {
   const detail = `${a.vendor}, ${usd(a.amount)}, ${charges} charges ${apart} days apart.`;
 
   const verdict = resolved === 'disputed'
-    ? 'Disputed. Logged to the trust panel.'
+    ? 'Disputed.'
     : resolved === 'dismissed'
       ? 'Marked not a duplicate.'
       : null;

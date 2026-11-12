@@ -57,6 +57,35 @@ test('reveal source table names its sources without invented counts', async () =
   assert.ok(!copy.includes('12 deposits'), 'literal deposit count should be dropped');
 });
 
+test('reveal names the projected month part from the projected day, not a literal mid-', async () => {
+  const { raiseBy } = await import('../public/js/engine.js');
+  const { fmtMonthDay } = await import('../public/js/calendar.js');
+  const partOf = (d) => (d.getUTCDate() <= 10 ? 'early' : d.getUTCDate() <= 20 ? 'mid' : 'late');
+  const fullMonth = (d) => d.toLocaleString('en-US', { month: 'long', timeZone: 'UTC' });
+
+  // Walk cash far enough to land a projected date in each part of a month.
+  const found = new Map();
+  for (let delta = -40000000; delta <= 40000000 && found.size < 3; delta += 50000) {
+    const sc = structuredClone(fixture);
+    sc.cash += delta;
+    const d = raiseBy(sc);
+    if (!d) continue;
+    const part = partOf(d);
+    if (!found.has(part)) found.set(part, { sc, d, part });
+  }
+  assert.deepEqual([...found.keys()].sort(), ['early', 'late', 'mid'], 'cash walk did not reach all three parts');
+
+  for (const { sc, d, part } of found.values()) {
+    const copy = text(await render(sc));
+    const label = `${part}-${fullMonth(d)} ${d.getUTCFullYear()}`;
+    assert.ok(copy.includes(`Start raising by ${label}.`), `headline is not ${label}: ${copy.slice(0, 200)}`);
+    assert.ok(
+      copy.includes(`Start raising by ${label} (base case ${fmtMonthDay(d)})`),
+      `receipt is not ${label}: ${copy.slice(0, 260)}`
+    );
+  }
+});
+
 test('reveal renders a contract-less scenario and says no contract was entered', async () => {
   const noContract = structuredClone(fixture);
   noContract.contracts = [];

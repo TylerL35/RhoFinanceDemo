@@ -62,6 +62,14 @@ test('deriveFromSnapshot follows the payload when an amount changes', () => {
   assert.equal(d.committed, 1895050 + 5000);
 });
 
+test('the committed $18,951 is derived from 1,895,050 cents and rounded, not typed', () => {
+  const payload = snapshot.scheduled_transactions.reduce((s, t) => s + t.amount.amount, 0);
+  assert.equal(payload, 1895050, 'the payload must sum to 1,895,050 cents');
+  assert.equal(usd(1895050), '$18,951', 'usd() rounds 1,895,050 cents half up to $18,951');
+  assert.equal(deriveFromSnapshot(snapshot).committed, payload, 'committed is not the payload sum');
+  assert.ok(text(render(snapshot)).includes('$18,951 committed'), 'the screen does not print the rounded derived figure');
+});
+
 test('deriveFromSnapshot does not invent a burn figure the snapshot cannot support', () => {
   const d = deriveFromSnapshot(snapshot);
   assert.equal(d.trailingBurn, null, 'no cashflow payload is committed, so no burn number may be claimed');
