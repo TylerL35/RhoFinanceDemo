@@ -91,7 +91,7 @@ The `Scenario` is the only mutable state. Nothing derived is stored.
     "plannedRevenue":    40000000                     // $400K/mo -> planned net burn $150K
   },
   "cushionMonths": 6,
-  "grossSpend": { "current": 57700000 },              // plan + 3 hires
+  "grossSpend": { "current": 55000000 },          // plan base; the 3 hires arrive via payroll[]
   "revenue": {
     "current": 39100000,                              // $391K/mo, $9K behind plan
     "trailing": [
