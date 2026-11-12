@@ -8,6 +8,19 @@ import * as alerts from './screens/alerts.js';
 import * as trust from './screens/trust.js';
 import * as claude from './screens/claude.js';
 import * as setup from './screens/setup.js';
+import * as connect from './screens/connect.js';
+
+// The Rho snapshot is pre-fetched by scripts/fetch-rho-sandbox.mjs and committed
+// with the demo. It is read once at boot; no screen ever calls the network.
+async function loadSnapshot() {
+  const res = await fetch('./data/rho-sandbox.snapshot.json');
+  if (res.ok === false) throw new Error(`snapshot ${res.status}`);
+  const snap = await res.json();
+  if (!Array.isArray(snap.accounts) || !Array.isArray(snap.scheduled_transactions)) {
+    throw new Error('snapshot is not a sandbox payload');
+  }
+  return snap;
+}
 
 const params = new URLSearchParams(location.search);
 if (params.has('present')) {
@@ -39,6 +52,7 @@ function initialState(fixture) {
 export const app = {
   state: initialState(),
   route: '/',
+  snapshot: null,
   screens: {
     '/': home.home,
     '/reveal': reveal.reveal,
@@ -48,6 +62,7 @@ export const app = {
     '/trust': trust.trust,
     '/claude': claude.claude,
     '/setup': setup.setup,
+    '/connect': connect.connect,
   },
   go(route) {
     this.route = route;
@@ -194,7 +209,7 @@ export const app = {
   },
   render() {
     const route = this.screens[this.route] ? this.route : '/';
-    const out = this.screens[route]({ state: this.state, route });
+    const out = this.screens[route]({ state: this.state, route, snapshot: this.snapshot });
     const root = document.getElementById('app');
     root.innerHTML = typeof out === 'string' ? out : out.html;
     if (typeof out === 'object' && out.after) out.after();
@@ -202,6 +217,11 @@ export const app = {
   async boot() {
     try {
       this.fixture = await loadFixture();
+      try {
+        this.snapshot = await loadSnapshot();
+      } catch {
+        this.snapshot = null; // the connected-data screen still renders, and says why
+      }
       this.state = initialState(this.fixture);
       this.state.scenario = loadLocal() ?? this.state.scenario;
       this.route = location.hash.replace('#', '') || '/';
