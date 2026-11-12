@@ -60,7 +60,11 @@ function bootWithKeyboard() {
 }
 
 function press(listeners, key, target = { tagName: 'BODY' }) {
-  for (const fn of listeners.keydown ?? []) fn({ key, target });
+  const prevented = [];
+  for (const fn of listeners.keydown ?? []) {
+    fn({ key, target, preventDefault: () => prevented.push(key) });
+  }
+  return prevented.length;
 }
 
 test('app.js registers one keydown listener', async () => {
@@ -132,4 +136,21 @@ test('a key press renders exactly once and only through app.go', async () => {
     app.go = originalGo;
     app.screens['/reveal'] = originalScreen;
   }
+});
+
+test('handled keys preventDefault so arrows do not also scroll the page', async () => {
+  const { app, listeners } = await bootWithKeyboard();
+  app.go('/');
+
+  assert.equal(press(listeners, 'ArrowRight'), 1, 'ArrowRight is handled and prevents the scroll default');
+  assert.equal(press(listeners, 'ArrowLeft'), 1, 'ArrowLeft is handled and prevents the scroll default');
+  assert.equal(press(listeners, 'Escape'), 1, 'Escape is handled too');
+
+  assert.equal(press(listeners, 'ArrowDown'), 0, 'an unhandled key is left to the browser');
+  assert.equal(press(listeners, 'ArrowUp'), 0, 'an unhandled key is left to the browser');
+  assert.equal(press(listeners, 'Tab'), 0, 'an unhandled key is left to the browser');
+  assert.equal(press(listeners, 'a'), 0, 'an unhandled key is left to the browser');
+
+  assert.equal(press(listeners, 'ArrowRight', { tagName: 'INPUT' }), 0, 'typing keeps the default');
+  assert.equal(press(listeners, 'Escape', { tagName: 'TEXTAREA' }), 0, 'typing keeps the default');
 });

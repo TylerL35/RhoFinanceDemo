@@ -4,6 +4,9 @@
 //
 // PRECACHE is generated from `find public -type f | sort` minus sw.js, and
 // tests/sw.test.mjs fails if a shipped file is missing from it.
+// Bump this on every deploy: raise-by-v1 -> raise-by-v2 -> raise-by-v3. The cache
+// name is the only thing that invalidates a browser's precache, so a deploy that
+// leaves it alone keeps serving the old index.html and JS.
 const CACHE = 'raise-by-v1';
 const PRECACHE = [
   './data/fixture-seed.json',
@@ -60,8 +63,14 @@ self.addEventListener('fetch', (e) => {
           return res;
         })
         .catch((err) => {
-          if (e.request.mode === 'navigate') return caches.match('./index.html');
-          throw err;
+          if (e.request.mode !== 'navigate') throw err;
+          // Never resolve respondWith with undefined: if the shell is missing too,
+          // answer with a real 503 so the browser shows something honest.
+          return caches.match('./index.html').then(
+            (shell) =>
+              shell ||
+              new Response('Offline', { status: 503, headers: { 'content-type': 'text/plain' } })
+          );
         });
     })
   );

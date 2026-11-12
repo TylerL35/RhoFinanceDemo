@@ -245,9 +245,14 @@ const SCRIPT = ['/', '/reveal', '/bill/hubspot', '/invoices', '/alerts/duplicate
 window.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
   const i = SCRIPT.indexOf(app.route);
-  if (e.key === 'ArrowRight') app.go(SCRIPT[Math.min(i + 1, SCRIPT.length - 1)]);
-  if (e.key === 'ArrowLeft') app.go(SCRIPT[Math.max(i - 1, 0)]);
-  if (e.key === 'Escape') app.go('/');
+  let next;
+  if (e.key === 'ArrowRight') next = SCRIPT[Math.min(i + 1, SCRIPT.length - 1)];
+  else if (e.key === 'ArrowLeft') next = SCRIPT[Math.max(i - 1, 0)];
+  else if (e.key === 'Escape') next = '/';
+  else return;
+  // Handled keys are ours: stop arrows from also scrolling the page.
+  e.preventDefault();
+  app.go(next);
 });
 
 window.app = app;

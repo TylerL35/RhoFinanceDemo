@@ -49,7 +49,11 @@ function loadWorker({ caches, fetchImpl }) {
     addEventListener: (type, fn) => { handlers[type] = fn; },
     skipWaiting: () => {},
   };
-  const sandbox = { self, caches, fetch: fetchImpl, console };
+  // Minimal Response stand-in: enough for the offline fallback to report status.
+  class FakeResponse {
+    constructor(body, init = {}) { this.body = body; this.status = init.status ?? 200; this.headers = init.headers ?? {}; }
+  }
+  const sandbox = { self, caches, fetch: fetchImpl, Response: FakeResponse, console };
   vm.runInNewContext(readFileSync(new URL('sw.js', PUBLIC), 'utf8'), sandbox);
   const run = async (type, event) => {
     const waits = [];
@@ -116,4 +120,22 @@ test('an offline navigation falls back to the precached index.html', async () =>
   const worker = loadWorker({ caches: api, fetchImpl: async () => { throw new Error('offline'); } });
   const res = await worker.request({ url: '/?present', method: 'GET', mode: 'navigate' });
   assert.equal((await res).body, 'shell');
+});
+
+test('an offline navigation with nothing cached answers 503, never undefined', async () => {
+  const { api } = makeCaches();
+  const worker = loadWorker({ caches: api, fetchImpl: async () => { throw new Error('offline'); } });
+  const res = await worker.request({ url: '/?present', method: 'GET', mode: 'navigate' });
+  assert.ok(res, 'respondWith always receives a promise');
+  const response = await res;
+  assert.ok(response, 'respondWith never resolves to undefined');
+  assert.equal(response.status, 503);
+  assert.equal(response.body, 'Offline');
+  assert.equal(response.headers['content-type'], 'text/plain');
+});
+
+test('an offline non-navigation still rejects instead of faking a response', async () => {
+  const { api } = makeCaches();
+  const worker = loadWorker({ caches: api, fetchImpl: async () => { throw new Error('offline'); } });
+  await assert.rejects(async () => worker.request({ url: './late.json', method: 'GET' }), /offline/);
 });
