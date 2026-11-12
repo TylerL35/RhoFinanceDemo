@@ -48,6 +48,18 @@ describing the real company, and the headline says the date without the what-if.
 Inter (400, 500) and DM Mono (400), SIL OFL 1.1, subset to Latin and bundled in
 `public/assets/fonts` with their licences. No CDN.
 
+## Live demo
+
+    https://adonis-umber.vercel.app
+
+Judges open this URL (the QR is `assets/qr-demo.svg` / `assets/qr-demo.png`). Vercel
+Authentication is disabled for this project on purpose: the demo holds no user data and
+every screen is synthetic.
+
+Deploy with `npx vercel --prod`. Vercel serves `public/` as the output directory, and
+`vercel.json` pins `no-cache` on `sw.js` and `/data/*` so a redeploy cannot be masked by the
+service worker's cache. Bump `CACHE` in `public/sw.js` on every deploy anyway.
+
 ## Regenerate the sandbox snapshot
 
     RHO_API_TOKEN=demo node scripts/fetch-rho-sandbox.mjs
