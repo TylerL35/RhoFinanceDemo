@@ -1,5 +1,6 @@
 import { parseDate, addDays, diffDays, daysInMonth, monthStart, MONTH_DAYS } from './calendar.js';
 import { derived } from './derived.js';
+import { terms } from './scenario.js';
 
 const HORIZON_MONTHS = 36;
 const MONTH_ABBR = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -22,7 +23,9 @@ export function payrollFor(sc, y, m) {
 function contractMonthly(sc, y, m) {
   const c = sc.contracts[0];
   if (c.choice !== 'monthly') return 0;
-  const start = parseDate(c.renewsOn);
+  // Choosing monthly replaces the annual renewal with monthly billing from the
+  // as-of month, so the freed renewal and the new fees sit on the same clock.
+  const start = parseDate(sc.asOf);
   const monthIndex = y * 12 + (m - 1);
   const startIndex = start.getUTCFullYear() * 12 + start.getUTCMonth();
   return monthIndex >= startIndex ? c.monthlyEquivalent : 0;
@@ -171,6 +174,25 @@ export function attribute(sc) {
     ],
     totalMonths: totalDays / MONTH_DAYS,
   };
+}
+
+export function noticeState(sc) {
+  return terms(sc, 'hubspot', parseDate(sc.asOf));
+}
+
+export function priceOption(sc, kind) {
+  const base = structuredClone(sc);
+  base.contracts[0].choice = null;
+  for (const inv of base.invoices) { inv.drafted = false; inv.collected = false; }
+  const baseline = raiseBy(base);
+
+  const v = structuredClone(base);
+  if (kind === 'monthly') v.contracts[0].choice = 'monthly';
+  if (kind === 'cancel') v.contracts[0].choice = 'cancel';
+  if (kind === 'collect') v.invoices.forEach((inv) => (inv.collected = true));
+
+  const date = kind === 'approve' ? baseline : raiseBy(v);
+  return { kind, date, deltaDays: diffDays(baseline, date) };
 }
 
 export { MONTH_DAYS, diffDays, parseDate, addDays };
