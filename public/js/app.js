@@ -237,5 +237,18 @@ export const app = {
   },
 };
 
+// The presenter path: arrows walk the scripted order and Escape returns to the
+// start, so the demo can be driven without touching the mouse. Keys are ignored
+// while typing, or the what-if box would navigate away mid-sentence. Navigation
+// goes through app.go() and nothing else, so the single-render rule still holds.
+const SCRIPT = ['/', '/reveal', '/bill/hubspot', '/invoices', '/alerts/duplicate', '/trust', '/claude'];
+window.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  const i = SCRIPT.indexOf(app.route);
+  if (e.key === 'ArrowRight') app.go(SCRIPT[Math.min(i + 1, SCRIPT.length - 1)]);
+  if (e.key === 'ArrowLeft') app.go(SCRIPT[Math.max(i - 1, 0)]);
+  if (e.key === 'Escape') app.go('/');
+});
+
 window.app = app;
 app.boot();
