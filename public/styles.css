@@ -359,3 +359,34 @@ p { margin: 0 0 10px; }
   .big-line { font-size: 26px; }
   .closing { font-size: 19px; }
 }
+
+/* ---------- Rho app parity (reference: Rho web Accounts, Home and Accounting screens) ----------
+   Rho's app uses plain sentence-case Inter labels, page content starting next to the sidebar,
+   tables inside white bordered cards and grey filled prompts. Headlines stay larger than Rho's
+   28px because this is read off a projector. */
+:root { --mono: var(--sans); --fs-h1: 36px; --fs-hero: 44px; }
+.eyebrow, .section-title, .card-kicker, .table th, .tag-new, .who, .co-sub, .date-pill .pill-k,
+.guess-line, .pill-tag, .footer-centre { text-transform: none; letter-spacing: 0; }
+.eyebrow { font-size: 13px; }
+.eyebrow::before, .who::before { display: none; }
+.section-title { font-size: 15px; font-weight: 500; color: var(--abyss); }
+.table th { font-size: 13px; color: var(--text-muted); }
+h1 { font-weight: 500; letter-spacing: -0.015em; line-height: 1.12; }
+.page { max-width: 1040px; margin: 0; }
+.table { background: var(--moon); border: 1px solid #E4EAE8; border-radius: 12px; border-collapse: separate; border-spacing: 0; overflow: hidden; }
+.table th, .table td:first-child { padding-left: 20px; }
+.table tr:last-child td { border-bottom: 0; }
+.card.attention { box-shadow: none; background: #F3F5F4; border-color: transparent; }
+.status { border: 0; padding: 0; font-size: 14px; background: none; }
+.status.ok { background: none; color: #05624F; }
+.sidebar { height: calc(100vh - 35px); }
+@media (max-width: 760px) {
+  .topbar .co-mark { display: none; }
+  .topbar .co-name { font-size: 18px; font-weight: 600; }
+  .mnav-list { padding: 8px 0 64px; }
+  .mnav-list a, .mnav-list .nav-inert { padding: 10px 20px; }
+  .mnav-list .group { margin-left: 20px; }
+}
+.table .act { padding-right: 16px; }
+.sidebar { padding-bottom: 16px; }
+.nav-list a, .nav-inert { padding-top: 7px; padding-bottom: 7px; }

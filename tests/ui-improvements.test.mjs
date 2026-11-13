@@ -194,7 +194,7 @@ test('money prints two decimals for millions and one for small rates', () => {
 test('the sidebar is Rho-shaped: real items inert, demo items live, counts derived', () => {
   const html = home({ state: { scenario: clone(fixture) } });
   for (const inert of ['Transactions', 'Accounts', 'Cards', 'Vendors', 'Reporting', 'Expenses', 'Reimbursements', 'Accounting']) {
-    assert.ok(new RegExp(`<span class="nav-inert" title="Not part of this demo">(<svg[^]*?</svg>)?<span>${inert}</span></span>`).test(html), `${inert} is not inert`);
+    assert.ok(new RegExp(`<span class="nav-inert" title="Not part of this demo"><svg class="nav-ico"(?:(?!</svg>)[^])*</svg><span>${inert}</span></span>`).test(html), `${inert} is not inert`);
   }
   assert.ok(html.includes('Demo Co.'), 'company name missing');
   assert.ok(/Invoicing<\/span><span class="count">2<\/span>/.test(html), 'overdue invoice count is not derived');
