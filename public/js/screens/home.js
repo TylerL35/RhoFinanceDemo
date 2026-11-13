@@ -35,7 +35,7 @@ export function home({ state }) {
   }
 
   const body = `
-    ${eyebrow(local ? 'YOUR NUMBERS' : 'NYU PMC × RHO · DEMO')}
+    ${eyebrow(local ? 'Your numbers' : 'Pilot Agent')}
     <h1>${local ? 'Your numbers are in.' : 'Your raise-by date moved this week.'}</h1>
     <p class="lead">Pilot gives you one date, the day you should start raising: when ${cushion} of cash remain.
       It is built from what you have already signed.</p>

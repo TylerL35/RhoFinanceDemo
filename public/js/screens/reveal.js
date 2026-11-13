@@ -151,7 +151,7 @@ export function reveal({ state }) {
 
   if (projected === null) {
     const body = `
-      ${eyebrow('PILOT')}
+      ${eyebrow('Pilot Agent')}
       <h1>Pilot cannot see a date yet.</h1>
       <p class="lead">Cash does not run out within three years at this rate.</p>
       ${local ? '<div class="row"><button class="btn ghost" onclick="app.reset()">Back to the demo company</button></div>' : ''}
@@ -204,7 +204,7 @@ export function reveal({ state }) {
     </div>`;
 
   const body = `
-    ${eyebrow(whatIf ? 'PILOT · WHAT-IF' : 'PILOT')}
+    ${eyebrow(whatIf ? 'Pilot Agent · What-if' : 'Pilot Agent')}
     ${guess.above}
     <h1 class="hero" data-flash="headline">Start raising by <span class="nowrap">${namedDate(projected)} ${year}.</span></h1>
     ${lead}
@@ -216,6 +216,7 @@ export function reveal({ state }) {
     ${math}
     ${local ? '' : confirmHtml(state)}
     ${local ? '' : barHtml(state)}
+    ${local ? '' : '<div class="row next-step"><a class="btn ghost" href="#/bill/hubspot">Next: the HubSpot renewal in Bill Pay →</a></div>'}
     ${sourcesHtml(real, local)}
     ${whatifHtml(state)}
     ${local ? '<div class="row"><button class="btn ghost" onclick="app.reset()">Back to the demo company</button></div>' : ''}`;

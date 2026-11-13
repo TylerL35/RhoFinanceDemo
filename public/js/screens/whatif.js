@@ -40,7 +40,7 @@ function controlsHtml(state) {
     const months = hireMonths(real);
     rows.push(`
       <div class="knob">
-        <span class="knob-k">Hires</span>
+        <span class="knob-k">Extra hires</span>
         <div class="knob-c">
           <div class="stepper">
             <button type="button" class="btn ghost step" id="knob-hires-down" aria-label="One fewer hire"

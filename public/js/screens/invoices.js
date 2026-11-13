@@ -53,7 +53,7 @@ export function invoices({ state }) {
 
   if (count === 0) {
     const body = `
-      ${eyebrow('INVOICING')}
+      ${eyebrow('Invoicing')}
       <h1>${headline}</h1>
       <p class="lead">No invoices connected.</p>`;
     return shell({ route: '/invoices', body, footerRight: 'Invoicing', state });
@@ -87,7 +87,7 @@ export function invoices({ state }) {
   const drafts = list.filter((i) => i.drafted && !i.collected);
 
   const body = `
-    ${eyebrow('INVOICING')}
+    ${eyebrow('Invoicing')}
     <h1>${headline}</h1>
     <p class="lead">${overdue} invoice${overdue === 1 ? ' is' : 's are'} overdue. Collecting moves timing. Closing the sales gap moves the date.</p>
     <table class="table invoices">

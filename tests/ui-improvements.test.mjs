@@ -73,7 +73,7 @@ test('confirmed hires plus a what-if: the bar still explains reality', () => {
 test('the reveal names the what-if and the date without it', () => {
   const state = withWhatIf(fixture, 'hire 2 more in March');
   const copy = text(reveal({ state }));
-  assert.ok(copy.includes('PILOT · WHAT-IF'), 'the eyebrow does not mark the what-if');
+  assert.ok(copy.includes('Pilot Agent · What-if'), 'the eyebrow does not mark the what-if');
   assert.ok(copy.includes('Start raising by late March 2027.'), `headline: ${copy.slice(0, 400)}`);
   assert.ok(copy.includes('Without your what-if: mid-April (Apr 11). This is 20 days earlier.'));
   assert.ok(copy.includes('Before what-if'), 'the timeline does not show where the date was');

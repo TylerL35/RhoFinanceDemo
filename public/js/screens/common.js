@@ -14,7 +14,13 @@ export const esc = (s) => String(s).replace(/[&<>"]/g, (c) => (
   { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]
 ));
 
-export const eyebrow = (t) => `<div class="eyebrow">${t}</div>`;
+// Rho's page header: the page name, then its status as a grey badge
+// ("Bill Pay · Awaiting approval"). The dot stays in the text for readers.
+export const eyebrow = (t) => {
+  const [title, ...rest] = String(t).split(' · ');
+  const sub = rest.length ? `<span class="eb-sub"><span class="eb-sep"> · </span>${rest.join(' · ')}</span>` : '';
+  return `<div class="eyebrow page-head"><span class="eb-title">${title}</span>${sub}</div>`;
+};
 
 export const chip = (t, extra = '') => `<span class="chip${extra ? ` ${extra}` : ''}">${t}</span>`;
 
@@ -120,7 +126,7 @@ export function shell({ route, body, footerRight = '', state = null }) {
         <img class="rho-logo" src="./assets/rho-logo.png" alt="Rho" width="83" height="38">
         <span class="bell" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></span>
       </div>
-      ${sc ? datePill(state) : ''}
+      ${sc && !(route === '/' && !state?.guesses?.value) ? datePill(state) : ''}
       <div class="nav-list">${navLinks(route, c)}</div>
       <div class="nav-demo">${demoLinks(route)}</div>
       <div class="co">

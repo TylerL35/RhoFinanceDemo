@@ -41,7 +41,7 @@ test('bill prices all three options from priceOption, in order, with derived dat
 
   const approve = copy.indexOf('Approve as is Apr 11 no change');
   const monthly = copy.indexOf('Ask for monthly Apr 12 about a day later');
-  const cancel = copy.indexOf('Cancel Apr 20 about 9 days later');
+  const cancel = copy.indexOf('Cancel renewal Apr 20 about 9 days later');
   assert.ok(approve >= 0, `approve label missing: ${copy.slice(0, 400)}`);
   assert.ok(monthly >= 0, 'monthly label missing');
   assert.ok(cancel >= 0, 'cancel label missing');

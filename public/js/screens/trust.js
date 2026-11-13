@@ -66,7 +66,7 @@ export function trust({ state }) {
     : '';
 
   const body = `
-    ${eyebrow('TRUST')}
+    ${eyebrow('Trust')}
     <h1>What it knows, what it won't guess, and who's in control.</h1>
     ${lead}
     <div class="grid2">

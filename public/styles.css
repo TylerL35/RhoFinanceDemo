@@ -390,3 +390,122 @@ h1 { font-weight: 500; letter-spacing: -0.015em; line-height: 1.12; }
 .table .act { padding-right: 16px; }
 .sidebar { padding-bottom: 16px; }
 .nav-list a, .nav-inert { padding-top: 7px; padding-bottom: 7px; }
+
+/* ---------- Rho app parity, pass 2 ----------
+   Page header row, Rho chips and badges, card tables, mint/green data colours, quieter footer. */
+:root { --border: #E0E6E4; --line: #E4EAE8; --fill: #F4F5F5; --rho-green: #08A68A; }
+
+/* Page header: page name left (Rho's "Accounts" / "Accounting" row), status as a grey badge. */
+.main { padding-top: 26px; }
+.eyebrow.page-head { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; min-height: 40px;
+  font-size: 24px; font-weight: 500; line-height: 1.2; letter-spacing: -0.01em; color: var(--abyss); margin: 0 0 20px; }
+.eb-sep { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.eb-sub { font-size: 13px; font-weight: 400; letter-spacing: 0; color: var(--ink-2); background: #ECEFEE;
+  border-radius: 4px; padding: 2px 8px; line-height: 1.4; }
+.eyebrow.page-head + h1, .eyebrow.page-head + .guess-line { margin-top: 0; }
+.guess-line { margin-top: 0; margin-bottom: 4px; font-size: 14px; }
+
+/* Leftover caps labels go sentence case, like the rest of Rho. */
+.quote cite, .opt-on, .mail dt { text-transform: none; letter-spacing: 0; font-size: 13px; }
+
+/* Cards, knobs, options and drafts share Rho's one hairline. */
+.card, .knobs, .knob, .option, .draft-details, .msg.rho, .code, .response { border-color: var(--line); }
+
+/* Chips: Rho's flat grey badge (the "Platinum" tag), not an outlined pill. */
+.chip { font-size: 12.5px; border: 0; border-radius: 4px; background: #ECEFEE; color: var(--ink-2); padding: 2px 8px; }
+.chip.ok { background: var(--accent-soft); color: #05624F; }
+.chip.pending { border: 1px dashed var(--border-2); background: none; color: var(--text-muted); padding: 1px 7px; }
+.card.attention .chip { background: var(--moon); }
+.count, .chip-btn .key { background: #E6EAE8; border: 0; border-radius: 999px; color: var(--ink-2); font-size: 11px; min-width: 18px; height: 18px;
+  line-height: 18px; padding: 0 5px; text-align: center; display: inline-block; }
+.tag-new { background: var(--mint); color: var(--abyss); border-radius: 4px; }
+
+/* Buttons: Rho's 40px secondary (white, hairline) and mint primary. */
+.btn { border-radius: 8px; min-height: 40px; padding: 9px 16px; }
+.btn.ghost { border-color: var(--border); }
+.btn-sm { min-height: 32px; padding: 5px 12px; }
+.btn-xs { min-height: 0; padding: 3px 10px; border-radius: 6px; }
+.chip-btn[aria-pressed="true"] { border-color: var(--rho-green); background: #EFFDF9; box-shadow: inset 0 0 0 1px var(--rho-green); }
+.seg-btn[aria-pressed="true"] { border-color: var(--rho-green); background: #EFFDF9; }
+.stepper .step { min-height: 0; }
+
+/* Dropdowns look like Rho's "Last 30 days" picker: plain, with a chevron. */
+.knob-sub select { appearance: none; -webkit-appearance: none; border-color: var(--border); border-radius: 8px; padding: 8px 34px 8px 12px; cursor: pointer;
+  background: var(--moon) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23151716' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center; }
+
+/* Bill Pay options: selected reads as Rho's green check state. */
+.option { border-radius: 12px; }
+.option:hover { background: var(--moon-2); }
+.option.on { border-color: var(--rho-green); box-shadow: inset 0 0 0 1px var(--rho-green); background: #EFFDF9; }
+.opt-on { color: #05624F; font-weight: 500; }
+
+/* Tables: Rho's bordered card with a grey header row and roomy rows. */
+.table th { padding: 13px 8px 13px 0; background: var(--moon); border-bottom-color: var(--line); font-weight: 400; }
+.table td { border-bottom-color: var(--line); padding-top: 14px; padding-bottom: 14px; }
+.table th:first-child, .table td:first-child { padding-left: 20px; }
+.table th:last-child { padding-right: 20px; }
+.evidence td:first-child { white-space: nowrap; }
+.table td:last-child { padding-right: 20px; }
+.card > .table { margin: 0 0 12px; }
+.sources { background: var(--moon); border: 1px solid var(--line); border-radius: 12px; border-collapse: separate; border-spacing: 0; overflow: hidden; }
+.sources td { border-top: 1px solid var(--line); padding: 14px 12px 14px 0; }
+.sources td:first-child { padding-left: 20px; }
+.sources td:last-child { padding-right: 20px; }
+.sources tr:first-child td { border-top: 0; }
+.sources tr:last-child td { border-bottom: 0; }
+.stat-line { font-size: 16px; }
+.code { background: var(--fill); border-color: transparent; }
+
+/* Data colours: Rho's balance chart is a green line over a light mint fill on a dotted grid. */
+.tl-axis { background: var(--line); }
+.tl-tick { background: var(--border-2); }
+.tl-band { background: rgba(106, 243, 217, .28); border: 0; border-radius: 3px; }
+.tl-dot { background: var(--rho-green); box-shadow: 0 0 0 4px var(--chrome); }
+.tl-arrow { background: var(--rho-green); }
+.tl-arrow::before { border-right-color: var(--rho-green); }
+.tl-ring { border-color: var(--border-2); }
+.bar { border: 1px solid var(--line); border-radius: 6px; height: 28px; }
+.bar .signed { background: var(--mint); }
+.bar .uncertain { border-left: 1px solid var(--line);
+  background: radial-gradient(circle, #C9D2CF 1px, transparent 1.3px) 0 0 / 8px 8px, var(--fill); }
+.swatch.uncertain { border: 1px solid var(--border-2);
+  background: radial-gradient(circle, #9AA29E 0.8px, transparent 1px) 0 0 / 4px 4px, var(--fill); }
+.whatif-line { border-left-color: var(--rho-green); background: var(--fill); }
+
+/* Ask Rho: the question bubble is Rho's grey fill; answer is a white card. */
+.msg.user { background: var(--fill); }
+
+/* Footer: quiet, same chrome colour and hairline as the sidebar. */
+.footer { background: var(--chrome); border-top: 1px solid #EEF1F0; padding: 6px 20px; }
+.footer-right .btn { min-height: 0; }
+.date-pill.side-pill { background: var(--fill); border-color: transparent; }
+
+/* Mobile: Rho's app opens on the company name in bold, no logo tile. */
+@media (max-width: 760px) {
+  .topbar { height: 60px; background: var(--chrome); border-bottom-color: #EEF1F0; }
+  .topbar .co-name { font-size: 20px; font-weight: 500; letter-spacing: -0.01em; }
+  .mnav summary { border-color: var(--border); border-radius: 8px; background: var(--moon); }
+  .mnav-list { top: 60px; }
+  .main { padding-top: 18px; }
+  .eyebrow.page-head { font-size: 20px; min-height: 0; margin-bottom: 18px; }
+  .sources tr { border-top: 1px solid var(--line); padding: 12px 16px; }
+  .sources tr:first-child { border-top: 0; }
+  .sources tr:last-child { border-bottom: 0; }
+  .sources td, .sources td:first-child, .sources td:last-child, .sources tr:first-child td { border: 0; padding: 1px 0; }
+  .sources td:last-child { padding-top: 6px; }
+  .table th:last-child, .table td:last-child { padding-right: 12px; }
+  .table th:first-child, .table td:first-child { padding-left: 14px; }
+}
+
+/* Usability pass: readable from the back of a room, thumb-sized on a phone. */
+.bar-k { font-size: 20px; }
+.bar-legend .muted { font-size: 15px; }
+.tl-lab, .tl-lab.down, .tl-lab.muted-lab { font-size: 14px; }
+.next-step { margin: 8px 0 28px; }
+@media (max-width: 760px) {
+  .btn, .chip-btn, .mnav summary, .mnav-list a, .mnav-list .nav-inert { min-height: 44px; }
+  .btn { display: inline-flex; align-items: center; }
+  .link, .footer-right a, .footer .btn-xs { min-height: 32px; display: inline-flex; align-items: center; }
+  .bar-k { font-size: 17px; }
+  .tl-lab, .tl-lab.muted-lab { font-size: 12px; }
+}

@@ -17,7 +17,7 @@ export function alerts({ state }) {
   // a vendor, an amount, or a date.
   if (!a) {
     const empty = `
-      ${eyebrow('NOT SURE · TAKE A LOOK')}
+      ${eyebrow('Not sure · Take a look')}
       <h1>Nothing unusual right now.</h1>
       <p class="lead">Rho will flag a duplicate charge when it sees one.</p>`;
     return shell({ route: '/alerts/duplicate', body: empty, footerRight: 'Needs a look', state });
@@ -42,7 +42,7 @@ export function alerts({ state }) {
     : 'Rho will not ask about this pair again.';
 
   const body = `
-    ${eyebrow('NOT SURE · TAKE A LOOK')}
+    ${eyebrow('Not sure · Take a look')}
     <h1>Possible duplicate charge.</h1>
     <p class="lead">${detail}</p>
     <div class="card white">

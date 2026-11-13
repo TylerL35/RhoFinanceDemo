@@ -3,7 +3,7 @@ import { priceOption, noticeState, raiseBy, netBurn } from '../engine.js';
 import { parseDate, addDays, diffDays, fmtMonthDay, fmtDay, MONTH_DAYS } from '../calendar.js';
 import { usd, shortUsd, shortUsd1 } from '../money.js';
 
-const LABEL = { approve: 'Approve as is', monthly: 'Ask for monthly', cancel: 'Cancel' };
+const LABEL = { approve: 'Approve as is', monthly: 'Ask for monthly', cancel: 'Cancel renewal' };
 
 // A delta phrase, never a signed day count: 0 is "no change" and 1 is "a day",
 // because "(+1 days)" reads like a bug on a projector.
@@ -82,7 +82,7 @@ export function bill({ state }) {
     return shell({
       route: '/bill/hubspot',
       body: `
-        ${eyebrow('BILL PAY')}
+        ${eyebrow('Bill Pay')}
         <h1>No contract entered.</h1>
         <p class="lead">Add one in Use my numbers to price the renewal.</p>`,
       footerRight: 'Bill Pay',
@@ -126,7 +126,7 @@ export function bill({ state }) {
   const said = rest.join(':').trim().replace(/^"|"$/g, '');
 
   const body = `
-    ${eyebrow('BILL PAY · AWAITING APPROVAL')}
+    ${eyebrow('Bill Pay · Awaiting approval')}
     <h1>${c.vendor}, ${c.term} renewal, ${usd(c.amount)}.</h1>
     ${raiseByLine}
     <div class="card white attention countdown">

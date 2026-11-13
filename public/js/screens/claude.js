@@ -104,7 +104,7 @@ export function claude({ state }) {
       </div>`;
 
   const body = `
-    ${eyebrow('ASK RHO · READ-ONLY')}
+    ${eyebrow('Ask Rho · Read-only')}
     <h1>Ask about your raise-by date.</h1>
     <div class="chat">
       <div class="msg user"><span>${QUESTIONS[q]}</span></div>

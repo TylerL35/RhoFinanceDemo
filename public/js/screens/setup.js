@@ -77,7 +77,7 @@ const money = (id, label, value) =>
 export function setup({ state } = {}) {
   const e = EXAMPLE;
   const body = `
-    ${eyebrow('USE MY NUMBERS')}
+    ${eyebrow('Use my numbers')}
     <h1>Your numbers, your date.</h1>
     <p class="lead">Nothing leaves this browser. An example company is filled in: press the button to
       see its date, then replace the numbers with yours.</p>

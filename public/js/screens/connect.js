@@ -39,7 +39,7 @@ function fetchedOn(value) {
 export function connect({ snapshot, state } = {}) {
   const d = deriveFromSnapshot(snapshot);
   const head = `
-    ${eyebrow('CONNECTED DATA')}
+    ${eyebrow('Connected data')}
     <h1>Rho has the inputs. Runway is what we compute.</h1>`;
 
   if (!d) {
