@@ -250,7 +250,7 @@ Any static file server works. There is no build step, no bundler, no `node_modul
 
 ## 10. Test
 
-    npm test               # node --test, 252 tests, no dependencies
+    npm test               # node --test, 253 tests, no dependencies
 
 Nineteen test files, all on Node's built-in runner. They cover the engine (`raiseBy`, attribution,
 options, contract-less companies), the parser and knob model, the screens' rendered HTML, the
@@ -270,11 +270,11 @@ Then regenerate the QR from the deployed URL: `assets/QR-INSTRUCTIONS.md` explai
 `assets/qr-demo.svg` / `.png` are the committed assets.
 
 **Bump the cache version on every deploy.** `public/sw.js` precaches the whole app under a
-versioned cache name (`CACHE = 'raise-by-v2'`). The fetch handler is cache-first, so a browser that
+versioned cache name (`CACHE = 'raise-by-v3'`). The fetch handler is cache-first, so a browser that
 has already installed the worker answers navigations from its cached `index.html` and JS and never
 asks the network. The only thing that tells it to re-install is a byte change in `sw.js`, and the
 only thing that drops the old entries is the new cache name in `activate`. So on each deploy, edit
-the constant to the next number (`raise-by-v2` to `raise-by-v3` to `raise-by-v4`), commit it with
+the constant to the next number (`raise-by-v3` to `raise-by-v4` to `raise-by-v5`), commit it with
 the rest of the change, and deploy. Skipping the bump serves the previous build to anyone who has
 visited before, which is why a "fixed" screen can still look broken on the demo machine.
 
