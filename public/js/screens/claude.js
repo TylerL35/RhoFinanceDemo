@@ -1,6 +1,6 @@
 import { shell, eyebrow, chip, realScenario, hasWhatIf } from './common.js';
 import { raiseBy, range, attribute, activeContract, revenueBand } from '../engine.js';
-import { parseDate, fmtDay, fmtMonthDay } from '../calendar.js';
+import { parseDate, fmtDayYear, fmtMonthDay } from '../calendar.js';
 import { displayTenths } from '../derived.js';
 import { shortUsd } from '../money.js';
 import { segmentWords } from './bar.js';
@@ -34,7 +34,7 @@ function answers(sc, state) {
   const realHires = (sc.payroll ?? []).filter((p) => !p.whatif).length;
 
   const out = {};
-  let when = `Rho estimates ${fmtDay(d, asOf)}, ${d.getUTCFullYear()}${rangeText}, when you would have ${cushion} of cash left.`;
+  let when = `Rho estimates ${fmtDayYear(d)}${rangeText}, when you would have ${cushion} of cash left.`;
   if (known && a.totalMonths > 0) {
     const [, uncertain] = displayTenths(parts, a.totalMonths);
     const total = a.totalMonths.toFixed(1);

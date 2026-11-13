@@ -1,7 +1,7 @@
 import { attribute, activeContract } from '../engine.js';
 import { displayTenths } from '../derived.js';
 import { shortUsd } from '../money.js';
-import { parseDate, fmtDay } from '../calendar.js';
+import { fmtDayYear } from '../calendar.js';
 import { realScenario } from './common.js';
 
 // The labels print the integer tenths that displayTenths() chose, so the two
@@ -53,10 +53,11 @@ export function barHtml(state) {
 
   const [s, u] = displayTenths(parts, a.totalMonths);
   const total = s + u;
-  const anchor = fmtDay(a.anchor, parseDate(sc.asOf));
-  const anchorLine = `Anchored to ${anchor}, ${a.anchor.getUTCFullYear()}, the date your plan pointed to. Forward-looking from today: payroll already paid is not undone.`;
+  const anchorLine = `Compared with ${fmtDayYear(a.anchor)}, the date your plan pointed to. Payroll already paid stays counted.`;
+  // anchor minus current: positive means the date came earlier than the plan.
+  const dir = a.totalDays >= 0 ? 'earlier' : 'later';
 
-  // A total of 0.0 is not a small move: it is no move. "Why it moved 0.0
+  // A total of 0.0 is not a small move: it is no move. "Why your date moved 0.0
   // months" over an empty bar reads like a bug, so say what is true instead.
   if (total === 0) {
     return `
@@ -70,19 +71,19 @@ export function barHtml(state) {
   const words = segmentWords(sc);
 
   return `
-    <section class="section" aria-label="Why it moved ${tenths(total)} months">
-      <h3 class="section-title">Why it moved ${tenths(total)} months</h3>
-      <div class="bar" role="img" aria-label="Signed about ${tenths(s)} months, not certain yet about ${tenths(u)} months">
+    <section class="section" aria-label="Why your date moved ${tenths(total)} months ${dir}">
+      <h3 class="section-title">Why your date moved ${tenths(total)} months ${dir}</h3>
+      <div class="bar" role="img" aria-label="${tenths(s)} months from what you've signed, ${tenths(u)} months not certain yet">
         <div class="signed" data-anim="barSigned" style="width:${signPct}%"></div>
         <div class="uncertain"></div>
       </div>
       <div class="bar-legend">
         <div>
-          <div class="bar-k"><span class="swatch signed"></span>Signed about ${tenths(s)} mo</div>
+          <div class="bar-k"><span class="swatch signed"></span>${tenths(s)} months from what you've signed</div>
           <div class="muted">${words.signed || 'Nothing signed yet'}</div>
         </div>
         <div class="right">
-          <div class="bar-k"><span class="swatch uncertain"></span>Not certain yet about ${tenths(u)} mo</div>
+          <div class="bar-k"><span class="swatch uncertain"></span>${tenths(u)} months not certain yet</div>
           <div class="muted">${words.uncertain || 'Nothing uncertain'}</div>
         </div>
       </div>

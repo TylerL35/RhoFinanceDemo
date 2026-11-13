@@ -50,18 +50,18 @@ test('labels render as 0.4 / 2.6 before and 2.4 / 0.6 after', () => {
 
 test('bar prints the about-label split, the tenths total, and the anchor sentence', () => {
   const before = mount(mountBar, fx);
-  assert.ok(before.includes('Why it moved 3.0 months'), 'heading total comes from the tenths split');
-  assert.ok(before.includes('Signed about 0.4 mo'));
-  assert.ok(before.includes('Not certain yet about 2.6 mo'));
+  assert.ok(before.includes('Why your date moved 3.0 months earlier'), 'heading total comes from the tenths split');
+  assert.ok(before.includes("0.4 months from what you've signed"));
+  assert.ok(before.includes('2.6 months not certain yet'));
   assert.ok(
-    before.includes('Anchored to Jul 12, 2027, the date your plan pointed to. Forward-looking from today: payroll already paid is not undone.'),
+    before.includes('Compared with Jul 12, 2027, the date your plan pointed to. Payroll already paid stays counted.'),
     'anchor line must keep the verbatim sentence'
   );
 
   const after = mount(mountBar, confirmedFixture(), 'yes');
-  assert.ok(after.includes('Why it moved 3.0 months'));
-  assert.ok(after.includes('Signed about 2.4 mo'));
-  assert.ok(after.includes('Not certain yet about 0.6 mo'));
+  assert.ok(after.includes('Why your date moved 3.0 months earlier'));
+  assert.ok(after.includes("2.4 months from what you've signed"));
+  assert.ok(after.includes('0.6 months not certain yet'));
   assert.ok(!after.includes('Signed 2.4'), 'labels say about, not an exact figure');
 });
 
@@ -74,7 +74,7 @@ test('bar with no crossing prints only the no-date sentence, no graphic and no n
   const html = mount(mountBar, never);
   assert.ok(html.includes('No date to explain yet.'));
   assert.ok(!html.includes('class="bar"'), 'no bar graphic without a crossing');
-  assert.ok(!html.includes('Anchored to'));
+  assert.ok(!html.includes('Compared with'));
   for (const bad of ['NaN', 'null', 'undefined', 'Invalid Date']) {
     assert.ok(!html.includes(bad), `no-crossing bar contains ${bad}`);
   }

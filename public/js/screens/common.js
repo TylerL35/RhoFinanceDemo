@@ -61,8 +61,9 @@ function demoLinks(route) {
       ${link('/setup', 'Use my numbers')}`;
 }
 
-// The date that every money decision moves. It stays in view (sticky) on the
-// screens where a click can move it, and it flashes when it changes.
+// The date that every money decision moves. It sits in the sidebar under the
+// company name, so it is always in view, never covers the page, and flashes
+// when a click on any screen moves it.
 function datePill(state) {
   const sc = state?.scenario;
   if (!sc) return '';
@@ -70,15 +71,13 @@ function datePill(state) {
   const label = d ? fmtDay(d, parseDate(sc.asOf)) : 'no date';
   const tag = hasWhatIf(state) ? '<span class="pill-tag">what-if</span>' : '';
   return `
-    <div class="pill-rail">
-      <a class="date-pill" href="#/reveal" aria-live="polite">
-        <span class="pill-k">Raise-by</span>
-        <b data-flash="pill">${label}</b>${tag}
-      </a>
-    </div>`;
+    <a class="date-pill side-pill" href="#/reveal" aria-live="polite">
+      <span class="pill-k">Raise-by</span>
+      <b data-flash="pill">${label}</b>${tag}
+    </a>`;
 }
 
-export function shell({ route, body, footerRight = '', state = null, pill = false }) {
+export function shell({ route, body, footerRight = '', state = null }) {
   const sc = state?.scenario;
   const company = esc(sc?.company ?? (sc?.source === 'local' ? 'Your company' : 'Demo Co.'));
   const c = counts(sc, state);
@@ -102,10 +101,11 @@ export function shell({ route, body, footerRight = '', state = null, pill = fals
         <span class="co-mark" aria-hidden="true">${company.charAt(0)}</span>
         <div><div class="co-name">${company}</div><div class="co-sub">${sc?.source === 'local' ? 'Your numbers' : 'Synthetic data'}</div></div>
       </div>
+      ${sc ? datePill(state) : ''}
       <div class="nav-list">${navLinks(route, c)}</div>
       <div class="nav-demo">${demoLinks(route)}</div>
     </nav>
-    <main class="main">${pill ? datePill(state) : ''}${body}</main>
+    <main class="main"><div class="page">${body}</div></main>
   </div>
   <div class="footer">
     <span>Synthetic data</span>

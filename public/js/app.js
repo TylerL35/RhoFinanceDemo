@@ -191,7 +191,7 @@ export const app = {
     } else {
       fn(this.state.scenario);
     }
-    saveLocal(this.state.scenario);
+    saveLocal(this.realScenario());
   },
   // Onboarding builds the scenario from the form alone (no fixture history, no
   // wall clock), says what it found under the button, and only leaves the form
@@ -234,7 +234,7 @@ export const app = {
       this.mutateReal((sc) => { sc.payroll = sc.payroll.filter((p) => p.whatif); });
     }
     this.state.confirmations.payroll = kind;
-    saveLocal(this.state.scenario);
+    saveLocal(this.realScenario());
     this.render();
     if (kind === 'yes') this.bringIntoView('.bar', 'center');
   },
@@ -339,7 +339,9 @@ export const app = {
       this.state.intentBase = null;
     }
     this.state.whatifResult = knobsActive(k) ? this.whatIfSummary() : null;
-    saveLocal(this.state.scenario);
+    // Only the real company is saved: a what-if is a question, and a reload
+    // must never turn it into a fact.
+    saveLocal(this.realScenario());
     this.render();
   },
   // The controls. Each tap is one knob change with its own echo.
@@ -436,23 +438,6 @@ export const app = {
     if (!this.fixture) return; // boot() has not landed yet; it renders the initial state itself
     this.go('/');
   },
-  // On a screen whose headline is the date, the sticky pill would repeat it, so
-  // it shows only once the headline has scrolled out of view.
-  watchPill(root) {
-    this.pillObserver?.disconnect?.();
-    this.pillObserver = null;
-    if (typeof root?.querySelector !== 'function') return;
-    const rail = root.querySelector('.pill-rail');
-    const hero = root.querySelector('h1.hero');
-    if (!rail || !hero || typeof globalThis.IntersectionObserver !== 'function') return;
-    // Decide now, so a re-render while scrolled down does not blink the pill.
-    rail.classList.toggle('hide', hero.getBoundingClientRect().bottom > 20);
-    this.pillObserver = new IntersectionObserver(
-      ([entry]) => rail.classList.toggle('hide', entry.isIntersecting),
-      { rootMargin: '-20px 0px 0px 0px' }
-    );
-    this.pillObserver.observe(hero);
-  },
   render() {
     const route = this.screens[this.route] ? this.route : '/';
     const doc = globalThis.document;
@@ -475,7 +460,6 @@ export const app = {
     root.classList?.toggle('arrive', arriving);
     const prev = arriving ? { pill: this.view.pill } : this.view;
     this.view = animateFrom(root, prev);
-    this.watchPill(root);
 
     // Keep the keyboard where it was: the what-if input after a what-if, or
     // whichever control had focus if it still exists.

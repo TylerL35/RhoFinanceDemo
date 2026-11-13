@@ -46,8 +46,8 @@ test('a what-if hire is not asked about, not confirmed, and not counted as signe
   assert.ok(!card.includes('$45K') && !card.includes('5 new hires'), 'what-if hires reached the confirm card');
 
   const bar = text(barHtml(state));
-  assert.ok(bar.includes('Signed about 0.4 mo'), `bar: ${bar}`);
-  assert.ok(bar.includes('Not certain yet about 2.6 mo'));
+  assert.ok(bar.includes("0.4 months from what you've signed"), `bar: ${bar}`);
+  assert.ok(bar.includes('2.6 months not certain yet'));
   assert.deepEqual(
     attribute(state.intentBase).segments.map((s) => s.days),
     attribute(fixture).segments.map((s) => s.days),
@@ -65,8 +65,8 @@ test('confirmed hires plus a what-if: the bar still explains reality', () => {
   const state = withWhatIf(confirmed, 'hire 2 more in March');
   state.confirmations.payroll = 'yes';
   const bar = text(barHtml(state));
-  assert.ok(bar.includes('Signed about 2.4 mo'), `bar: ${bar}`);
-  assert.ok(bar.includes('Not certain yet about 0.6 mo'));
+  assert.ok(bar.includes("2.4 months from what you've signed"), `bar: ${bar}`);
+  assert.ok(bar.includes('0.6 months not certain yet'));
   assert.ok(text(confirmHtml(state)).includes('Payroll confirmed by you: $27K a month'), 'confirmed line counted what-if rows');
 });
 
@@ -119,7 +119,7 @@ test('a local company reveal has no plan story and no fixture labels', () => {
   const copy = text(html);
   assert.ok(copy.includes('Start raising by late October 2028.'), `headline: ${copy.slice(0, 300)}`);
   assert.ok(copy.includes('A single date, not a range: there is no revenue history yet.'));
-  for (const leak of ['Gusto', 'Why it moved', 'late October to late October', 'last 0 months', 'Revenue deposits', 'behind plan']) {
+  for (const leak of ['Gusto', 'Why your date moved', 'late October to late October', 'last 0 months', 'Revenue deposits', 'behind plan']) {
     assert.ok(!copy.includes(leak), `local reveal printed "${leak}"`);
   }
   assert.ok(copy.includes('Entered by you'), 'local sources are not labelled as entered');
@@ -223,4 +223,16 @@ test('after cancelling the renewal, nothing calls it a reason the date moved', (
   assert.ok(!when.includes('and the HubSpot renewal'), 'a cancelled renewal is still named as a reason');
   const bar = text(barHtml({ scenario: sc }));
   assert.ok(bar.includes('3 hires') && !bar.includes('HubSpot renewal'), bar);
+});
+
+test('a date more than a year out prints its year exactly once', () => {
+  const sc = clone(fixture);
+  sc.revenue.current = sc.plan.plannedRevenue + 3000000; // ahead of plan: the anchor lands late 2027
+  sc.cushionMonths = 3;
+  for (const html of [barHtml({ scenario: sc }), claude({ state: { scenario: sc, ask: 'when' } })]) {
+    const copy = text(html);
+    assert.ok(!/\b(20\d\d), \1\b/.test(copy), `year printed twice: ${copy.match(/\w+ \d+, 20\d\d, 20\d\d/)?.[0]}`);
+  }
+  const anchor = text(barHtml({ scenario: clone(fixture) }));
+  assert.ok(anchor.includes('Compared with Jul 12, 2027, the date'), anchor);
 });

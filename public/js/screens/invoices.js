@@ -56,7 +56,7 @@ export function invoices({ state }) {
       ${eyebrow('INVOICING')}
       <h1>${headline}</h1>
       <p class="lead">No invoices connected.</p>`;
-    return shell({ route: '/invoices', body, footerRight: 'Invoicing', state, pill: true });
+    return shell({ route: '/invoices', body, footerRight: 'Invoicing', state });
   }
 
   const overdue = list.filter((i) => !i.collected && diffDays(parseDate(i.dueOn), asOf) > 0).length;
@@ -102,5 +102,5 @@ export function invoices({ state }) {
       <span class="muted">${caption}</span>
     </div>
     ${drafts.length ? `<div class="drafts">${drafts.map((i, k) => reminder(i, asOf, k === 0)).join('')}</div>` : ''}`;
-  return shell({ route: '/invoices', body, footerRight: 'Invoicing', state, pill: true });
+  return shell({ route: '/invoices', body, footerRight: 'Invoicing', state });
 }

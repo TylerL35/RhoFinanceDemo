@@ -219,5 +219,5 @@ export function reveal({ state }) {
     ${sourcesHtml(real, local)}
     ${whatifHtml(state)}
     ${local ? '<div class="row"><button class="btn ghost" onclick="app.reset()">Back to the demo company</button></div>' : ''}`;
-  return shell({ route: '/reveal', body, footerRight: 'Reveal', state, pill: true });
+  return shell({ route: '/reveal', body, footerRight: 'Reveal', state });
 }

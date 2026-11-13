@@ -208,7 +208,7 @@ test('a zero total renders "Nothing has moved your date yet." and no bar graphic
     delete globalThis.app;
   }
   assert.ok(el.innerHTML.includes('Nothing has moved your date yet.'), 'zero total needs the empty state');
-  assert.ok(!el.innerHTML.includes('Why it moved'), 'a zero total must not claim a move');
+  assert.ok(!el.innerHTML.includes('Why your date moved'), 'a zero total must not claim a move');
   assert.ok(!el.innerHTML.includes('class="bar"'), 'a zero total has nothing to draw');
   assert.ok(!el.innerHTML.includes('0.0 months'), 'no zero-total tenths in the copy');
 });

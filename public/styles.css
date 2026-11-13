@@ -67,10 +67,9 @@ kbd { font-family: var(--mono); font-size: 11px; border: 1px solid var(--border)
 .footer-right a:hover { color: var(--text); }
 
 /* ---------- Page ---------- */
-.main { padding: 40px 56px 120px; max-width: 1040px; width: 100%; position: relative; }
-/* Content reads in a 740px column; the space to its right is the gutter the
-   date pill floats in, so it never sits on top of a card. */
-.main > :not(.pill-rail) { max-width: 740px; }
+.main { padding: 40px 56px 120px; width: 100%; min-width: 0; position: relative; }
+/* One centred reading column, so a projector shows no empty band on one side. */
+.page { max-width: 780px; margin: 0 auto; }
 .eyebrow { font-family: var(--mono); font-size: var(--fs-micro); letter-spacing: .14em; text-transform: uppercase;
   color: var(--text-muted); display: flex; align-items: center; gap: 8px; }
 .eyebrow::before { content: ""; width: 8px; height: 8px; background: var(--accent); display: inline-block; flex: none; }
@@ -211,10 +210,8 @@ p { margin: 0 0 10px; }
 .suggest { gap: 8px; margin-top: 8px; }
 
 /* Sticky date pill */
-.pill-rail { position: sticky; top: 14px; height: 0; z-index: 20; display: flex; justify-content: flex-end; }
-.pill-rail .date-pill { transition: opacity .25s, transform .25s; }
-/* On Raise-by the headline already says the date: the pill appears once it scrolls away. */
-.pill-rail.hide .date-pill { opacity: 0; transform: translateY(-6px); pointer-events: none; }
+/* In the sidebar, under the company name: always visible, never over the page. */
+.date-pill.side-pill { display: flex; margin: 0 4px 14px; justify-content: space-between; box-shadow: none; background: var(--moon-2); }
 .date-pill { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px; background: var(--moon);
   border: 1px solid var(--border); border-radius: 999px; box-shadow: 0 2px 10px rgba(21, 23, 22, .08); text-decoration: none; font-size: 13px; }
 .date-pill .pill-k { color: var(--text-muted); font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; }
@@ -303,7 +300,7 @@ p { margin: 0 0 10px; }
 @keyframes changed { 0% { background: var(--accent); } 100% { background: transparent; } }
 .changed { animation: changed 1.6s var(--ease); border-radius: 4px; }
 @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-.arrive .main > h1, .arrive .main > .lead, .arrive .main > .guess-delta { animation: rise .45s var(--ease) both; }
+.arrive .page > h1, .arrive .page > .lead, .arrive .page > .guess-delta { animation: rise .45s var(--ease) both; }
 /* The sliding dot's label waits for the slide, so it never sits on "Plan said". */
 @keyframes appear { from { opacity: 0; } to { opacity: 1; } }
 .arrive .tl-dot .tl-lab { animation: appear .3s ease .85s both; }
@@ -327,7 +324,6 @@ p { margin: 0 0 10px; }
   h1 { font-size: 30px; }
   h1.hero { font-size: 38px; }
   .lead { font-size: 16px; }
-  .pill-rail { display: none; }
   .grid2 { grid-template-columns: 1fr; }
   .options { grid-template-columns: 1fr; }
   .opt-date { font-size: 24px; }

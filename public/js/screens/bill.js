@@ -146,5 +146,5 @@ export function bill({ state }) {
     ${chosen
       ? draftEmail(chosen, c, renews, asOf)
       : '<p class="muted">Draft opens in your email. You review and send. Monthly plans can cost more, so the net shows once they quote.</p>'}`;
-  return shell({ route: '/bill/hubspot', body, footerRight: 'Bill Pay', state, pill: true });
+  return shell({ route: '/bill/hubspot', body, footerRight: 'Bill Pay', state });
 }

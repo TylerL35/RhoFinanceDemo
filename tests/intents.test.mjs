@@ -266,13 +266,13 @@ test('app.applyWhatIf saves the intent, and undo restores the pre-intent snapsho
   assert.equal(app.state.appliedIntents.length, 1, 'applied intent was not recorded');
   assert.equal(app.state.appliedIntents[0].echo, 'I read that as: 2 more hires starting March 2027, +$18K/mo.');
   assert.equal(echo.textContent, 'I read that as: 2 more hires starting March 2027, +$18K/mo.');
-  assert.equal(JSON.parse(store.get('raise-by.scenario.v1')).payroll.length, 5, 'mutation was not saved');
+  assert.equal(JSON.parse(store.get('raise-by.scenario.v1')).payroll.length, 3, 'a what-if was saved as if it were real');
 
   app.undoWhatIf();
 
   assert.equal(app.state.scenario.payroll.length, 3, 'undo did not restore the snapshot');
   assert.equal(app.state.appliedIntents.length, 0, 'undo did not pop the recorded intent');
-  assert.equal(JSON.parse(store.get('raise-by.scenario.v1')).payroll.length, 3, 'undo was not saved');
+  assert.equal(JSON.parse(store.get('raise-by.scenario.v1')).payroll.length, 3, 'the real company changed on undo');
 });
 
 test('app.applyWhatIf refuses without touching the scenario', async () => {

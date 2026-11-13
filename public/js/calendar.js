@@ -38,6 +38,11 @@ export function fmtDay(d, from) {
     : fmtMonthDay(d);
 }
 
+// "Sep 16, 2027": always with the year, printed exactly once.
+export function fmtDayYear(d) {
+  return d.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+}
+
 export function fullMonth(d) {
   return d.toLocaleString('en-US', { month: 'long', timeZone: 'UTC' });
 }
