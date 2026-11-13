@@ -7,13 +7,14 @@
 // Bump this on every deploy: pilot-v4 -> pilot-v5 -> pilot-v6. The cache
 // name is the only thing that invalidates a browser's precache, so a deploy that
 // leaves it alone keeps serving the old index.html and JS.
-const CACHE = 'pilot-v4';
+const CACHE = 'pilot-v5';
 const PRECACHE = [
   './assets/fonts/DMMono-OFL.txt',
   './assets/fonts/DMMono-Regular.woff',
   './assets/fonts/Inter-Medium.woff',
   './assets/fonts/Inter-OFL.txt',
   './assets/fonts/Inter-Regular.woff',
+  './assets/rho-logo.png',
   './data/fixture-seed.json',
   './data/rho-sandbox.snapshot.json',
   './index.html',
