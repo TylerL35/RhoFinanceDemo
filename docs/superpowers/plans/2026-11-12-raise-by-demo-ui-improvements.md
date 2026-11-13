@@ -1,4 +1,4 @@
-# Raise-By Demo: UI Review and Improvement Plan
+# Pilot Demo: UI Review and Improvement Plan
 
 > **For agentic workers:** Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to run this plan task by task. Steps use checkbox (`- [ ]`) syntax. Every task ends with `node --test tests/*.test.mjs` green and a manual check at 1280×800 and 375×812.
 
@@ -407,7 +407,7 @@ for (const el of root.querySelectorAll('[data-flash]')) {
 - [ ] Trust leads with the deck's line, derived from the bar: `About three quarters is already signed.` Map `signed / total` to words: <0.4 `Less than half`, <0.6 `About half`, <0.7 `About two thirds`, <0.85 `About three quarters`, else `Almost all`. The fixture after confirm is 0.78, so it says "About three quarters".
 - [ ] 2×2 grid: **Didn't bother you: 41** (the rule plus `<details>` listing 3–5 `suppression.examples` from the fixture, each `moved your date 2 days`), **What we can't see**, **When it's wrong** (buttons from Task 4), **Who sees it** (deck slide 9: admins only, payroll as one total, read-only expiring accountant share). Put the closing sentence `AI reads and explains. Math makes every number. You approve. Rho never moves money.` large and regular weight, as the deck's quote style.
 - [ ] Remove the "Today's run rate" card (not in the deck) or fold it into the math receipt.
-- [ ] Connected data: requests as a code block with status pills (`200`), a two-column "Rho gives us / Raise-By adds" table (cash, committed vs cushion, contract terms, attribution), and `fetchedAt` formatted as `Nov 12, 2026`.
+- [ ] Connected data: requests as a code block with status pills (`200`), a two-column "Rho gives us / Pilot adds" table (cash, committed vs cushion, contract terms, attribution), and `fetchedAt` formatted as `Nov 12, 2026`.
 
 ---
 

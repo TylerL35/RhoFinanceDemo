@@ -38,7 +38,7 @@ function navLinks(route, c) {
   const inert = (label) => `<span class="nav-inert" title="Not part of this demo">${label}</span>`;
   return `
       ${link('/', 'Home')}
-      ${link('/reveal', 'Raise-by', '<span class="tag-new">New</span>')}
+      ${link('/reveal', 'Pilot', '<span class="tag-new">New</span>')}
       ${INERT_TOP.map(inert).join('')}
       <div class="group">Workflows</div>
       ${link('/invoices', 'Invoicing', count(c.overdue))}
@@ -72,7 +72,7 @@ function datePill(state) {
   const tag = hasWhatIf(state) ? '<span class="pill-tag">what-if</span>' : '';
   return `
     <a class="date-pill side-pill" href="#/reveal" aria-live="polite">
-      <span class="pill-k">Raise-by</span>
+      <span class="pill-k">Raise by</span>
       <b data-flash="pill">${label}</b>${tag}
     </a>`;
 }

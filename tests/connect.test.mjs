@@ -91,7 +91,7 @@ test('the screen prints the derived figures and the two verbatim lines', () => {
     'the label line is not verbatim'
   );
   assert.ok(
-    copy.includes("Could not derive: cushion, contract terms. That's the part Raise-By adds."),
+    copy.includes("Could not derive: cushion, contract terms. That's the part Pilot adds."),
     'the gap list is not verbatim'
   );
   assert.ok(copy.includes('Fictional company, not the one above.'), 'the fictional-company line is missing');

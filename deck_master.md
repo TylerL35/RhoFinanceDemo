@@ -1,4 +1,4 @@
-# Raise-By deck master (NYU PMC x Rho)
+# Pilot deck master (NYU PMC x Rho)
 
 Everything for the deck in one place: slide flow, what goes on each slide, the facts with sources, Rho's design system, the numbers sheet, and what not to say.
 Deck due Thu Nov 12, 11:59pm ET. Pitch Fri Nov 13, 7 min + 3 min Q&A. Target 6:15.
@@ -61,7 +61,7 @@ If rehearsal runs long: cut the demo to 1:00, fold slide 7 into 6, shorten slide
 
 ### 1. Title
 - Eyebrow: NYU PMC x RHO CASE COMPETITION
-- Headline: Raise-By. Know when to raise, from what you've already signed.
+- Headline: Pilot. Know when to raise, from what you've already signed.
 - Team: Michael, Neha, Tyler, Regis.
 
 ### 2. The problem
@@ -108,12 +108,12 @@ If rehearsal runs long: cut the demo to 1:00, fold slide 7 into 6, shorten slide
 - Why the finalists lost:
   - Flight Plan (budgets): budgets don't change behavior; Ramp and Digits already do it.
   - Investor-update prep: runs on the investor's calendar, not the founder's decision moment.
-  - Approval co-sign: misses slow sales; kept as one screen inside Raise-By.
+  - Approval co-sign: misses slow sales; kept as one screen inside Pilot.
   - AI CFO chatbot: founders don't know what to ask.
 - Pivot line: We started with a smarter dashboard. Research showed dashboards don't change behavior, alerts at the moment of decision do. So we moved the warning onto the bill.
 
 ### 6. The solution
-- Headline: Raise-By: one date, built from what's already signed.
+- Headline: Pilot: one date, built from what's already signed.
 - One line: Rho tells a founder when to start raising (when 6 months of cash remain), stays quiet until that date moves, then shows why and hands them a ready-to-approve fix.
 - See: burn, runway, upcoming obligations (payroll, bills, renewals and cancel windows) and anything unusual (duplicate charges, new vendors, spending jumps).
 - Act: ready-to-approve actions: approve or change a bill, a drafted cancel or switch-to-monthly email, invoice reminders, dispute a duplicate. Founder approves everything.

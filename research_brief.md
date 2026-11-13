@@ -1,4 +1,4 @@
-# Raise-By: research brief (NYU PMC x Rho case competition)
+# Pilot: research brief (NYU PMC x Rho case competition)
 
 Team: Michael, Neha, Tyler, Regis. Deck due Thu Nov 12, 11:59pm ET. Pitch Fri Nov 13 (7 min + 3 min Q&A).
 Status: working draft, Nov 11. Items marked [verify] are being fact-checked. Demo numbers are synthetic.
@@ -32,7 +32,7 @@ ICP data (checked Nov 11; sources in scratchpad rho_fit/03_icp_data.md):
 Evidence (checked against primary sources Nov 11; footers in scratchpad rho_fit/04_stat_verification.md):
 - VERIFIED. Paul Graham: "Half the founders I talk to don't know whether they're default alive or default dead." (Default Alive or Default Dead?, Oct 2015)
 - VERIFIED. Mercury: 75% of founders say running a business costs more than expected, up from 66% (survey of 1,500 US founders, published Aug 19, 2026; vendor survey).
-- VERIFIED. CB Insights (Mar 5, 2026): 70% of 385 shutdowns ran out of cash, which CB calls the symptom, not the root cause (PMF 43%). Median 22 months from last raise to shutdown. Frame Raise-By as visibility, not a cure.
+- VERIFIED. CB Insights (Mar 5, 2026): 70% of 385 shutdowns ran out of cash, which CB calls the symptom, not the root cause (PMF 43%). Median 22 months from last raise to shutdown. Frame Pilot as visibility, not a cure.
 - CORRECTED. SimpleClosure: only 24% of 2023 seed-funded startups ($1M+ rounds) made it past seed, vs a historical 55%+ (H1 2026 report, Aug 20, 2026). The 71% pre-seed/seed share and ~$265K left at shutdown are 2024 data; cite as 2024 only, or skip.
 - VERIFIED. Carta via TechCrunch: 966 shutdowns in 2024 vs 769 in 2023 (+26%); Carta says it undercounts.
 - VERIFIED. HN founder pplante, Bench shutdown thread, Dec 27, 2024: "This led to a $300k shortfall from where I thought I was vs reality." (Bench had hidden his Gusto payroll lines; it led to layoffs.)
@@ -70,19 +70,19 @@ Inflections (why now):
 - Society: record US business formation (5.67M applications in 2025, Census); more first-time founders on lean teams.
 - Norms: human approval for AI money movement is becoming standard (e.g., Mercury Agent Controls).
 
-## 5. Ideation and why Raise-By won
+## 5. Ideation and why Pilot won
 
 - About 30 ideas from 10 angles (behavioral, AI-native, trust, founder empathy, data, contrarian, analogies, Rho growth, social, demo-first), narrowed to 4 finalists, then 1.
 - Criteria: case fit, trust, feasibility on Rho, originality, evidence it changes behavior.
-- Finalist scores on the 7 judging criteria (out of 70): Raise-By with the approval price tag 63, Raise-By alone 57, Price Tag / Second Key 55, Before They Ask 52, Flight Plan 45.
+- Finalist scores on the 7 judging criteria (out of 70): Pilot with the approval price tag 63, Pilot alone 57, Price Tag / Second Key 55, Before They Ask 52, Flight Plan 45.
 - Why the others lost:
   - Flight Plan (budgets and a plan): budgets don't change behavior; Ramp and Digits already do it; too broad.
   - Before They Ask (investor-update prep): runs on the investor's calendar, not the founder's decision moment.
-  - Price Tag / Second Key: misses slow sales; kept as one screen inside Raise-By.
+  - Price Tag / Second Key: misses slow sales; kept as one screen inside Pilot.
   - AI CFO chatbot: founders don't know what to ask.
 - Pivot: we started with a smarter dashboard. Research showed dashboards and budgets don't change behavior, but alerts at the moment of decision do. So we moved the warning onto the bill.
 
-## 6. The solution: Raise-By
+## 6. The solution: Pilot
 
 One date, the day the founder should start raising (when 6 months of cash remain), built from what is already signed. Quiet until it moves. When it moves, Rho shows why with receipts and hands the founder a ready-to-approve fix.
 
@@ -118,7 +118,7 @@ Right insight, right person, right time:
 
 ## 8. Built on what Rho already has
 
-Rho already holds the inputs; Raise-By adds a founder-friendly layer on top.
+Rho already holds the inputs; Pilot adds a founder-friendly layer on top.
 - Reused: bank balances and transactions; scheduled payments; Bill Pay with invoice scanning (OCR) and duplicate flags; Invoicing (receivables and due dates); corporate cards; Rho Close categories and accounting syncs (QuickBooks and others [verify list]); roles and approvals; the Slack app; the read-only Claude connector; the API including Cash Flow Insights (beta).
 - New: a forward-looking forecast engine (signed vs not certain), reading renewal and notice terms from contracts, the 7-day surfacing rule, pricing options in days, drafted actions, the trust panel.
 - Rho today shows no runway or forecast in the app; its API page tells customers to build their own.
@@ -129,13 +129,13 @@ Inventory, checked Nov 11 (full table in scratchpad rho_fit/01_rho_inventory.md)
 - Cards and vendor cards: one card per vendor or subscription, so recurring software spend is visible by vendor.
 - Invoicing: receivables with due dates and unpaid/overdue status.
 - Accounting sync: QuickBooks Online (native plus bank feed), NetSuite, Sage Intacct, Xero, Puzzle, Campfire; Rillet as a one-way bank feed. Only QuickBooks is partly two-way.
-- Rho Close: AI suggests coding, a human confirms, then it syncs (same pattern Raise-By uses).
+- Rho Close: AI suggests coding, a human confirms, then it syncs (same pattern Pilot uses).
 - Payroll: Rho does not run payroll; Gusto, Rippling, Justworks, Deel and Every pull funds over ACH, so Rho sees the debits.
 - Roles: Account Owner, Administrator, Department Owner, Employee, Bookkeeper, Investor, AP & Expense Manager, External Admin, External Accountant, custom roles. (An Investor role already exists.)
 - Surfaces: Home and All Accounts (total cash, money in vs out, Oct 2026); Rho for Slack (GA Nov 4; routines announced; approvals "not yet"); read-only Claude connector; API with webhooks.
 - Other: Capital credit line (GA Sep 2026), incorporation, Treasury.
 
-What Raise-By reuses vs adds:
+What Pilot reuses vs adds:
 - Reuses: cash, scheduled outflows, bills with OCR, receivables, vendor card history, accounting categories, payroll debits, roles, webhooks, Home/Slack/Claude surfaces, the read-only cite-your-sources AI pattern.
 - Adds: the forward-commitment forecast (Rho only shows past cash flow); contract-term extraction (no renewal or notice field exists today); inferring recurring payroll and subscriptions from history (recurring bill pay "not supported yet"); the speak-only-when-the-date-moves rule; pricing options in days; drafts for the founder to send.
 
@@ -143,7 +143,7 @@ Corrections to our assumptions:
 - Invoice reminders: NOT confirmed in Rho Invoicing (Rho's own comparison credits reminders to Stripe). In the demo, the reminder is a drafted email the founder sends, and we call it new.
 - Rho has a web runway calculator in its tools (rho.co/tools/runway-calculator, seen in the sitemap, not opened). It's a manual calculator, not live in the app; mention it carefully.
 - Rho's Treasury page says enterprise-style cash forecasting isn't what most growing companies need. Our answer: this isn't enterprise forecasting; it's one date for founders who have no finance person.
-- Rho's Slack marketing promises a heads-up before payroll leaves. Raise-By sits above alerts: it explains what changed the date and what to do.
+- Rho's Slack marketing promises a heads-up before payroll leaves. Pilot sits above alerts: it explains what changed the date and what to do.
 - Keep off slides: the Capital limit ($2M vs $5M on different pages) and whether the Slack agent is for all businesses or select ones (pages disagree).
 
 ## 9. Why this supports Rho specifically
@@ -159,10 +159,10 @@ Business data points (checked Nov 11; sources in scratchpad rho_fit/02_rho_busin
 - Cards: up to 1.25% cashback standard, up to 2% on Platinum.
 - Funding: "more than $205 million in equity and debt" (Bloomberg, Jan 2024); $75M Series B Dec 2021. A $150M Series C is NOT verified; don't cite.
 - Rho's own startup FAQ: "When should a startup switch banks?" "Ideally never. That's the point of choosing well at seed." NFX survey of 870 founders (2023): 58% had only one bank account.
-- Rho's partner program (e.g., Precursor Ventures): free incorporation, then "once you raise" a $2,000 bonus for keeping $200K for 90 days and running payroll through Rho. Rho's money comes after the raise; Raise-By helps more founders get there.
+- Rho's partner program (e.g., Precursor Ventures): free incorporation, then "once you raise" a $2,000 bonus for keeping $200K for 90 days and running payroll through Rho. Rho's money comes after the raise; Pilot helps more founders get there.
 - Rho's API page lists "burn and runway dashboards" as something customers can build themselves; Rho's API tokens "do not initiate payments."
 - Verified on rho.co (I checked the pages myself): Seve Ortale of Wayve Payments built burn/runway tracking, an AI CFO chat and weekly board summaries on Rho's API "in about five hours" (Introducing the Rho API, Jul 29, 2026; Oct '26 Product Update). Rho: "the source of truth your agents plug into" (Oct '26 Product Update).
-- Also on Rho's API post: Justin Hays (Arbor Management) connected Rho's API and QuickBooks to Claude to automate bookkeeping, work that "previously took his team and a fractional CFO 3-5 hours a week." Evidence that savvy founders are already building this layer themselves; Raise-By gives it to founders who can't.
+- Also on Rho's API post: Justin Hays (Arbor Management) connected Rho's API and QuickBooks to Claude to automate bookkeeping, work that "previously took his team and a fractional CFO 3-5 hours a week." Evidence that savvy founders are already building this layer themselves; Pilot gives it to founders who can't.
 - Fundraising takes time: NFX 2023, 40% of founders who raised took 3-5 months, 31% took 6-12 months (supports a 6-month cushion).
 - Seed economics: median seed $4.1M at $24.3M valuation (Carta, Jul 2026); median 616 days from seed to Series A (Carta, Sep 2025).
 - Competition: Mercury 300K+ customers, ~$650M revenue run rate, "one in three US startups," AI recap alerts (Mercury annual letter, Feb 2026). Capital One closed its Brex acquisition Apr 7, 2026. Ramp 70K+ customers, $1B+ run rate (Jun 2026).

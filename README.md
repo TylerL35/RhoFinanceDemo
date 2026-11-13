@@ -1,13 +1,13 @@
-# Raise-By
+# Pilot
 
-A working demo of **Raise-By**, a proposed Rho feature that answers one question for a
+A working demo of **Pilot**, a proposed Rho feature that answers one question for a
 first-time founder: *when should we start raising?*
 
 It is a static site. No build step, no dependencies, no external network calls at runtime, and
 it runs offline after the first load. Every dollar amount is either fixture data or arithmetic
 on fixture data. There is no model and no backend.
 
-**The pitch in one line:** every finance tool shows founders what they already spent. Raise-By
+**The pitch in one line:** every finance tool shows founders what they already spent. Pilot
 shows the date they can still act on, built from what they have already signed.
 
 - Live: the Vercel project is `adonis`; production today is https://adonis-umber.vercel.app
@@ -26,7 +26,7 @@ December, a sales plan that is quietly running 2% light.
 bills sees the signature first. So the warning belongs on the bill, at the moment the founder can
 still change it, not on a dashboard afterwards.
 
-Raise-By therefore computes one date, the first day the founder should start raising, defined as
+Pilot therefore computes one date, the first day the founder should start raising, defined as
 the day cash first falls to the cushion they want to keep (6 months by default). Around it:
 
 | Objective | What the demo does |
@@ -89,7 +89,7 @@ not in the demo, a mobile top bar under 760px, and a footer that always says "Sy
 | Route | Screen | What it shows | What you can do |
 |---|---|---|---|
 | `/` | Home | "Your raise-by date moved this week", with an optional guess (May to Aug 2027) | Guess, reveal, or skip |
-| `/reveal` | **Raise-by** | the date, the range, the timeline strip (plan said Jul 12, base case Apr 11), the math line, the confirm card, the signed / not-certain bar, the source table, the what-if controls | answer the payroll question (yes / one-time / other), open the what-if, change the cushion |
+| `/reveal` | **Pilot** | the date, the range, the timeline strip (plan said Jul 12, base case Apr 11), the math line, the confirm card, the signed / not-certain bar, the source table, the what-if controls | answer the payroll question (yes / one-time / other), open the what-if, change the cushion |
 | `/bill/hubspot` | Bill Pay | the renewal with 9 days left on the cancel window, the quoted order-form line, the burn per day, and three options priced in days | pick an option, read the draft email |
 | `/invoices` | Invoicing | the $9K sales gap, two overdue invoices, days overdue | draft both reminders, mark one collected |
 | `/alerts/duplicate` | Needs a look | the two charges as rows, with "same vendor / same amount / 6 days apart" | dispute or dismiss |
@@ -103,7 +103,7 @@ Notes on two of them:
 - **`/connect`** exists to draw the boundary honestly. It reads
   `public/data/rho-sandbox.snapshot.json` (pre-fetched from `rhoapi-sandbox.rho.co`), derives cash
   and committed outflows from the payload, and then reports that cushion and contract terms are
-  *not* derivable from it. That gap is what Raise-By adds. It never calls the network.
+  *not* derivable from it. That gap is what Pilot adds. It never calls the network.
 - **`/setup`** builds a scenario from the form alone: no fixture history, no plan, no alerts, and
   no trailing revenue, so the date comes back as a single date rather than a range. The example
   values (cash $900K, revenue $60K, spend $90K) put the date about two years out, so a judge can
@@ -209,7 +209,7 @@ from then on, and shows `Step n / 10` in the footer. No mouse needed:
 | `Esc` | back to Home |
 | `Shift` + `Esc` | start over, clearing every choice and what-if |
 
-Order: Home → Raise-by (the dot slides from Jul 12 to Apr 11) → confirm hires (the bar re-splits,
+Order: Home → Pilot (the dot slides from Jul 12 to Apr 11) → confirm hires (the bar re-splits,
 the date does not move) → Bill Pay → Cancel (+9 days, the pill flashes, the draft appears) →
 Invoicing → draft reminders → Needs a look → Trust → Ask Rho.
 
@@ -270,11 +270,11 @@ Then regenerate the QR from the deployed URL: `assets/QR-INSTRUCTIONS.md` explai
 `assets/qr-demo.svg` / `.png` are the committed assets.
 
 **Bump the cache version on every deploy.** `public/sw.js` precaches the whole app under a
-versioned cache name (`CACHE = 'raise-by-v3'`). The fetch handler is cache-first, so a browser that
+versioned cache name (`CACHE = 'pilot-v4'`). The fetch handler is cache-first, so a browser that
 has already installed the worker answers navigations from its cached `index.html` and JS and never
 asks the network. The only thing that tells it to re-install is a byte change in `sw.js`, and the
 only thing that drops the old entries is the new cache name in `activate`. So on each deploy, edit
-the constant to the next number (`raise-by-v3` to `raise-by-v4` to `raise-by-v5`), commit it with
+the constant to the next number (`pilot-v4` to `pilot-v5` to `pilot-v6`), commit it with
 the rest of the change, and deploy. Skipping the bump serves the previous build to anyone who has
 visited before, which is why a "fixed" screen can still look broken on the demo machine.
 

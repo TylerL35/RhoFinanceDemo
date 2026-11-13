@@ -120,6 +120,6 @@ test('reveal renders a contract-less scenario and says no contract was entered',
 
   assert.ok(copy.includes('No contract entered'), 'missing no-contract row');
   assert.ok(copy.includes('Add one in Use my numbers'), 'missing no-contract caption');
-  assert.ok(copy.includes('Raise-by'), 'screen chrome should still render');
+  assert.ok(copy.includes('Pilot'), 'screen chrome should still render');
   assertNoBrokenDates(html, 'contract-less');
 });

@@ -151,8 +151,8 @@ export function reveal({ state }) {
 
   if (projected === null) {
     const body = `
-      ${eyebrow('RAISE-BY')}
-      <h1>Raise-By cannot see a date yet.</h1>
+      ${eyebrow('PILOT')}
+      <h1>Pilot cannot see a date yet.</h1>
       <p class="lead">Cash does not run out within three years at this rate.</p>
       ${local ? '<div class="row"><button class="btn ghost" onclick="app.reset()">Back to the demo company</button></div>' : ''}
       ${sourcesHtml(sc, local)}`;
@@ -204,7 +204,7 @@ export function reveal({ state }) {
     </div>`;
 
   const body = `
-    ${eyebrow(whatIf ? 'RAISE-BY · WHAT-IF' : 'RAISE-BY')}
+    ${eyebrow(whatIf ? 'PILOT · WHAT-IF' : 'PILOT')}
     ${guess.above}
     <h1 class="hero" data-flash="headline">Start raising by <span class="nowrap">${namedDate(projected)} ${year}.</span></h1>
     ${lead}

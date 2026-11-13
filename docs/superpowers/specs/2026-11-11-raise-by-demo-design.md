@@ -1,4 +1,4 @@
-# Raise-By demo: design spec
+# Pilot demo: design spec
 
 NYU PMC x Rho case competition · team: Michael, Neha, Tyler, Regis
 Status: approved for implementation (rev 2) · Nov 11, 2026
@@ -15,7 +15,7 @@ not by hand. Where a number is display-rounded it is marked.
 
 ## 1. Goal
 
-Build a working, hosted MVP of Raise-By — the date a founder should start raising, derived from what
+Build a working, hosted MVP of Pilot — the date a founder should start raising, derived from what
 is already signed — that (a) carries a 75-second scripted pitch demo and (b) lets an audience member
 open the same URL on their own phone and model their own company.
 
@@ -412,7 +412,7 @@ prefill gross spend and revenue; no PDF parsing).
 
 - Builds a `Scenario` with `source: 'local'`, persists to `localStorage`, runs the same engine.
 - Validation: `cash ≤ 0`, `spend ≤ 0`, or `netBurn ≤ 0` → no date; instead
-  *"At this rate cash never runs out. Raise-By needs a positive burn."*
+  *"At this rate cash never runs out. Pilot needs a positive burn."*
 - If the contract's notice deadline is already past, the reveal says so and does not offer cancel.
 - Missing optional contract → the bar shows only what it knows, and `#/trust` lists it under "what we
   can't see". Honest degradation is the feature.
@@ -445,7 +445,7 @@ network at runtime.
 `#/connect` **derives, it does not display a date.** It runs the same engine functions over the
 snapshot — `cashFromAccounts()`, `netBurnFromCashflow()`, `committedFromScheduled()` — and prints
 *"14 accounts · $258,618 cash · $18,951 committed"*, then the gap list:
-*"could not derive: cushion, contract terms. That's the part Raise-By adds."* It is labeled
+*"could not derive: cushion, contract terms. That's the part Pilot adds."* It is labeled
 **"Sandbox data · fetched <fetchedAt>."**
 
 It must never print a raise-by date for the sandbox company: 72 transactions across three years and

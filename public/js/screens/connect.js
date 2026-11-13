@@ -62,8 +62,8 @@ export function connect({ snapshot, state } = {}) {
         <p class="muted">Balances and scheduled payments, read from the snapshot.</p>
       </div>
       <div class="card white">
-        <h3 class="section-title">Raise-By adds</h3>
-        <p class="muted">Could not derive: ${d.gaps.join(', ')}. That's the part Raise-By adds.</p>
+        <h3 class="section-title">Pilot adds</h3>
+        <p class="muted">Could not derive: ${d.gaps.join(', ')}. That's the part Pilot adds.</p>
         <p class="muted">Plus the attribution: which part of the move is signed, and which is not certain yet.</p>
       </div>
     </div>

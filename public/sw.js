@@ -4,10 +4,10 @@
 //
 // PRECACHE is generated from `find public -type f | sort` minus sw.js, and
 // tests/sw.test.mjs fails if a shipped file is missing from it.
-// Bump this on every deploy: raise-by-v2 -> raise-by-v3 -> raise-by-v4. The cache
+// Bump this on every deploy: pilot-v4 -> pilot-v5 -> pilot-v6. The cache
 // name is the only thing that invalidates a browser's precache, so a deploy that
 // leaves it alone keeps serving the old index.html and JS.
-const CACHE = 'raise-by-v3';
+const CACHE = 'pilot-v4';
 const PRECACHE = [
   './assets/fonts/DMMono-OFL.txt',
   './assets/fonts/DMMono-Regular.woff',

@@ -106,7 +106,7 @@ export function setup({ state } = {}) {
   return shell({ route: '/setup', body, footerRight: 'Use my numbers', state });
 }
 
-const NO_BURN = 'At this rate cash never runs out. Raise-By needs a positive burn.';
+const NO_BURN = 'At this rate cash never runs out. Pilot needs a positive burn.';
 const MISSING = 'Some numbers are missing.';
 const NO_DATE = 'No raise-by date within three years.';
 

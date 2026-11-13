@@ -1,8 +1,8 @@
-# Raise-By Demo Implementation Plan
+# Pilot Demo Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** A static, offline-capable, hosted MVP of Raise-By that carries a 75-second pitch demo and lets a judge model their own company on their own phone.
+**Goal:** A static, offline-capable, hosted MVP of Pilot that carries a 75-second pitch demo and lets a judge model their own company on their own phone.
 
 **Architecture:** One `Scenario` object is the only mutable state. Four pure engine functions (`raiseBy`, `attribute`, `priceOption`, `alertsFor`) derive every displayed number as a `Derived` record with inputs and a formula. Nine hash-routed screens render those records and write only to `state`. No framework, no build step, no dependencies, no network at runtime.
 
@@ -973,7 +973,7 @@ Expected: FAIL — ENOENT on `public/index.html`
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Raise-By · Rho</title>
+<title>Pilot · Rho</title>
 <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
@@ -1955,7 +1955,7 @@ export function setup({ state }) {
 
 export function setupResult(sc) {
   const errs = validate(sc);
-  if (errs.includes('NO_BURN')) return 'At this rate cash never runs out. Raise-By needs a positive burn.';
+  if (errs.includes('NO_BURN')) return 'At this rate cash never runs out. Pilot needs a positive burn.';
   if (errs.length) return 'Some numbers are missing.';
   return `Raise by ${raiseBy(sc).toISOString().slice(0, 10)}.`;
 }
@@ -2060,7 +2060,7 @@ export function connect({ state, snapshot }) {
       <div class="mono">${d.accounts} accounts · ${usd(d.cash)} cash · ${usd(d.committed)} committed
         · trailing net burn from /insights/cashflow</div>
       <p class="muted" style="margin-top:12px">Could not derive: ${d.gaps.join(', ')}.
-        That's the part Raise-By adds.</p>
+        That's the part Pilot adds.</p>
     </div>
     <div class="card">
       <h2>The exact requests</h2>

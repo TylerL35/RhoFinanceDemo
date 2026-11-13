@@ -35,7 +35,7 @@ test('home renders a date when cash crosses, and a sentence when it never does',
   const { home } = await import('../public/js/screens/home.js');
 
   const normal = home({ state: { scenario: fixture, guesses: { made: false, value: null } } });
-  assert.ok(normal.includes('Raise-by holds at Jul 2027'), 'fixture home names the date the plan pointed to (deck copy)');
+  assert.ok(normal.includes('Your raise-by date holds at Jul 2027'), 'fixture home names the date the plan pointed to (deck copy)');
   assert.ok(!normal.includes('Invalid Date'));
   assert.ok(!normal.includes('1970'));
 
@@ -46,7 +46,7 @@ test('home renders a date when cash crosses, and a sentence when it never does',
   const html = home({ state: { scenario: never, guesses: { made: false, value: null } } });
   assert.ok(
     html.includes(
-      'Raise-by cannot see a date yet: cash does not run out within three years at this rate.'
+      'Pilot cannot see a date yet: cash does not run out within three years at this rate.'
     )
   );
   assert.ok(!html.includes('Invalid Date'));

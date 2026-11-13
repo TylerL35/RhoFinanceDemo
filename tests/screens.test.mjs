@@ -293,7 +293,7 @@ test('claude answers with the raiseBy date, range words, and attribute months', 
   assert.ok(!copy.includes(`Sales is the uncertain part (${(uncertain / 10).toFixed(1)}`), 'unconfirmed hires were called sales');
   assert.equal(signed + uncertain, Math.round(a.totalMonths * 10), 'tenths must sum to the total');
   assert.equal(mintCount(renderClaude(clone(fixture))), 0, 'Ask-Rho must stay read-only (no mint button)');
-  for (const chip of ['Rho raise-by', 'HubSpot order form p.2', 'Gusto debits']) {
+  for (const chip of ['Pilot', 'HubSpot order form p.2', 'Gusto debits']) {
     assert.ok(copy.includes(chip), `source chip missing: ${chip}`);
   }
   for (const chip of ['When should we start raising?', 'What changed this week?', "What's still uncertain?"]) {
@@ -306,7 +306,7 @@ test('claude names only the sources the scenario actually carries', () => {
   bare.contracts = [];
   bare.payroll = [];
   const bareCopy = text(renderClaude(bare));
-  assert.ok(bareCopy.includes('Rho raise-by'), 'the Rho chip must always stay');
+  assert.ok(bareCopy.includes('Pilot'), 'the Pilot chip must always stay');
   assert.ok(!bareCopy.includes('order form'), 'invented a contract source for a contract-less company');
   assert.ok(!bareCopy.includes('Gusto debits'), 'invented a payroll source for a payroll-less company');
 

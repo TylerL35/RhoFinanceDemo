@@ -17,7 +17,7 @@ export function home({ state }) {
 
   let ask;
   if (d === null) {
-    ask = `<p class="lead">Raise-by cannot see a date yet: cash does not run out within three years at this rate.</p>`;
+    ask = `<p class="lead">Pilot cannot see a date yet: cash does not run out within three years at this rate.</p>`;
   } else {
     // On a normal week the card would say where the date holds. For the demo
     // company that is the date its plan pointed to before this week (the
@@ -31,13 +31,13 @@ export function home({ state }) {
       </div>`;
     ask = `${chips}
       <p class="muted note">On a normal week this card says
-        "Raise-by holds at ${fmtMonthYear(holds)}. Next check Monday."</p>`;
+        "Your raise-by date holds at ${fmtMonthYear(holds)}. Next check Monday."</p>`;
   }
 
   const body = `
     ${eyebrow(local ? 'YOUR NUMBERS' : 'NYU PMC × RHO · DEMO')}
     <h1>${local ? 'Your numbers are in.' : 'Your raise-by date moved this week.'}</h1>
-    <p class="lead">Raise-by is the day you should start raising: when ${cushion} of cash remain.
+    <p class="lead">Pilot gives you one date, the day you should start raising: when ${cushion} of cash remain.
       It is built from what you have already signed.</p>
     <div class="card white home-card">
       <h2>${local ? 'Your date is ready.' : 'When do you think it is?'}</h2>

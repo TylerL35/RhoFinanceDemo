@@ -147,7 +147,7 @@ test('reveal, bill, trust, ask, home, invoices and alerts render the contract-le
   assert.ok(screens.bill.includes('No contract entered.'));
   assert.ok(screens.trust.includes("Didn't bother you: 0 items"));
   assert.ok(screens.ask.includes('Rho estimates'));
-  assert.ok(screens.home.includes('Raise-by holds at'), 'home carries the company\'s own date');
+  assert.ok(screens.home.includes('Your raise-by date holds at'), 'home carries the company\'s own date');
   assert.ok(screens.invoices.includes('Sales are'), 'invoices renders its headline');
   assert.ok(screens.alerts.includes('Nothing unusual right now.'), 'alerts says there is nothing to see');
 });

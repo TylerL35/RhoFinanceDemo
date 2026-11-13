@@ -84,7 +84,7 @@ test('the as-of field is what the projection starts from', () => {
 
 test('a no-burn company is refused in words', () => {
   const note = setupResult(buildScenario(form));
-  assert.equal(note, 'At this rate cash never runs out. Raise-By needs a positive burn.');
+  assert.equal(note, 'At this rate cash never runs out. Pilot needs a positive burn.');
   assert.equal(setupReady(buildScenario(form)), false);
 });
 
@@ -307,7 +307,7 @@ test('a no-burn entry shows the refusal and does not navigate', async () => {
 
   assert.equal(
     els.get('setup-note').textContent,
-    'At this rate cash never runs out. Raise-By needs a positive burn.'
+    'At this rate cash never runs out. Pilot needs a positive burn.'
   );
   assert.equal(app.route, '/setup', 'a refusal stays on the form');
 });

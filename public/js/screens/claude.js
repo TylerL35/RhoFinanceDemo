@@ -98,7 +98,7 @@ export function claude({ state }) {
   const extra = a?.whatif ? `<p class="muted">${a.whatif}</p>` : '';
   const sources = `
       <div class="row chips">
-        ${chip('Rho raise-by')}
+        ${chip('Pilot')}
         ${contract ? chip(`${contract.vendor} order form p.2`) : ''}
         ${hasPayroll ? chip('Gusto debits') : ''}
       </div>`;
@@ -118,6 +118,6 @@ export function claude({ state }) {
     <div class="row suggestions">
       ${Object.entries(QUESTIONS).map(([k, label]) => `<button class="btn ghost${k === q ? ' current' : ''}"${k === q ? ' aria-pressed="true"' : ''} onclick="app.ask('${k}')">${label}</button>`).join('')}
     </div>
-    <p class="muted">Read-only. Answers come from the same math as the Raise-by screen; nothing here can move money.</p>`;
+    <p class="muted">Read-only. Answers come from the same math as the Pilot screen; nothing here can move money.</p>`;
   return shell({ route: '/claude', body, footerRight: 'Ask Rho', state });
 }
